@@ -3,15 +3,15 @@ A Mean, Lean, Reading Machine
 
 
 
-Sentiment Index Minimum Viable Product (MVP)
+# Sentiment Index Minimum Viable Product (MVP) #
 
 This one-pager is a summary of the work left to produce the first prototype of the sentiment index.
 
-Extensive overview of available dictionaries (Alberto): this step will entail finding publicly available dictionaries and exploring their pros and cons, including how much they are in agreement and how they could be combined, if possible at all. (Priority: Moderate)
-Identification of labeled data sources (Michael): this step entails both a literature review to understand how they have been labeled and some data mining to find already labeled text basis to build sentiment index.  (Priority: Low)
-Minimum Result: writing a one pager on how to combine labeled sources
-Stretch Goal: train a model to construct a dictionary
-Data Cleaning (Michael & Alberto): the text now available is pretty raw. It should be cleaned and formatted to make the analysis easier. (Priority: High)
+1. [Extensive overview of available dictionaries](https://github.com/EST-Team-Adam/TheReadingMachine/issues/6) (Alberto): this step will entail finding publicly available dictionaries and exploring their pros and cons, including how much they are in agreement and how they could be combined, if possible at all. *(Priority: Moderate)*
+2. [Identification of labeled data sources](https://github.com/EST-Team-Adam/TheReadingMachine/issues/10) (Michael): this step entails both a literature review to understand how they have been labeled and some data mining to find already labeled text basis to build sentiment index. *(Priority: Low)*
+ a. Minimum Result: writing a one pager on how to combine labeled sources
+ b. Stretch Goal: train a model to construct a dictionary
+3. [Data Cleaning](https://github.com/EST-Team-Adam/TheReadingMachine/issues/5) (Michael & Alberto): the text now available is pretty raw. It should be cleaned and formatted to make the analysis easier. (Priority: High)
 Key Word Identification (Luca & Alberto): Identify important words that describe the information contained in the article. (Priority: Moderate)
 Minimum Result: TF/IDF weighting of the words in order to reduce noise and identify important terms
 Stretch Goal: building a more complex model using (maybe) POS tagging.
