@@ -7,7 +7,7 @@ A Mean, Lean, Reading Machine
 
 This one-pager is a summary of the work left to produce the first prototype of the sentiment index.
 
-1. [Extensive overview of available dictionaries](https://github.com/EST-Team-Adam/TheReadingMachine/issues/6) (Alberto): this step will entail finding publicly available dictionaries and exploring their pros and cons, including how much they are in agreement and how they could be combined, if possible at all. *(Priority: Moderate)*
+1. [Extensive overview of available dictionaries](https://github.com/EST-Team-Adam/TheReadingMachine/issues/6) (@albertomun): this step will entail finding publicly available dictionaries and exploring their pros and cons, including how much they are in agreement and how they could be combined, if possible at all. **(Priority: Moderate)**
 2. [Identification of labeled data sources](https://github.com/EST-Team-Adam/TheReadingMachine/issues/10) (Michael): this step entails both a literature review to understand how they have been labeled and some data mining to find already labeled text basis to build sentiment index. *(Priority: Low)*
  a. Minimum Result: writing a one pager on how to combine labeled sources
  b. Stretch Goal: train a model to construct a dictionary
