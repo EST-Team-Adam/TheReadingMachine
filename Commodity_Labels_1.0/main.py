@@ -75,7 +75,13 @@ def NA(article):
         article = ['NA','NA','NA','NA','NA','this','this','this','this','article','article','article','is','is','missing']
    return article
 
+def short(article):   
+   if len(article) < 6:
+        article = ['NA','NA','NA','NA','NA','this','this','this','this','article','article','article','is','is','too short']
+   return article
+
 articles1['article'] = articles1['article'].apply(NA)
+articles1['article'] = articles1['article'].apply(short)
 
 
 ##############################################  LABELS  ###############################################
@@ -105,6 +111,7 @@ for i in range(0,labels_matrix.shape[0]):
 
 np.size(np.compress((labels_matrix[:,4] <= 3),labels_matrix))/(np.size(np.compress((labels_matrix[:,4] > 4),labels_matrix))+np.size(np.compress((labels_matrix[:,4] <= 4),labels_matrix)))
 np.size(np.compress((labels_matrix[:,4] <= 4),labels_matrix))/(np.size(np.compress((labels_matrix[:,4] > 4),labels_matrix))+np.size(np.compress((labels_matrix[:,4] <= 4),labels_matrix)))
+
 word1 = [0 for i in range(articles1['article'].shape[0])]
 word2 = [0 for i in range(articles1['article'].shape[0])]
 word3 = [0 for i in range(articles1['article'].shape[0])]
