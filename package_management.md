@@ -85,6 +85,4 @@ the `anaconda` steps.
  deactivate
  ```
 
- You will be able to use all the packages that has been installed
- system wide.
 
