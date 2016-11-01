@@ -124,13 +124,21 @@ otherwise the `anaconda` steps.
  **NOTE (Michael): Make sure you are in the virtual environment,
    otherwise, it would be a system wide installation.**
 
- **NOTE (Michael): Unfortunately, certain pacakges are not available
-   on anaconda. You will have to manually install them into the
-   environment.**
-
  ```
  git checkout master -- requirements.txt
  conda install --yes --file requirements.txt
+ ```
+
+ **NOTE (Michael): Unfortunately, certain packages have inconsistent
+   naming and thus need to be manually installed. For example, the
+   prompt toolkit is named `prompt-toolkit` in `pip` but
+   `prompt_toolkit` in `anaconda`.**
+
+ For example, the `prompt-toolkit` is not available on the `anaconda`
+ repository and thus need to be installed with.
+
+ ```
+ conda install -c https://conda.anaconda.org/conda-forge prompt_toolkit
  ```
 
  All future dependent packages should be installed via `conda`.
