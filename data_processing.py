@@ -1,6 +1,6 @@
-import json
+from thereadingmachine.process import read_jsonl
 from thereadingmachine.process import process_text
-
+from json import dump
 
 # Reading data
 # --------------------------------------------------
@@ -13,11 +13,7 @@ output_file_name = '{0}_{1}_processed.jsonl'.format(file_prefix, version)
 test_sample_size = 1000
 
 # Read the data
-print "Reading data from '{0}' ...".format(input_file_name)
-articles = []
-with open(input_file_name) as f:
-    for line in f:
-        articles.append(json.loads(line))
+articles = read_jsonl(input_file_name)
 
 # Take a sample for testing
 test_sample = articles[:test_sample_size]
@@ -34,5 +30,5 @@ for article in test_sample:
 # --------------------------------------------------
 with open(output_file_name, 'w') as f:
     for article in test_sample:
-        json.dump(article, f)
+        dump(article, f)
         f.write('\n')

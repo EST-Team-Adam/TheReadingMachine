@@ -1,4 +1,4 @@
-import json
+from thereadingmachine.process import read_jsonl
 from thereadingmachine.keyword import get_topic_keywords
 from thereadingmachine.keyword import extract_text_keywords
 
@@ -9,11 +9,7 @@ input_file_name = '{0}_{1}_processed.jsonl'.format(file_prefix, version)
 test_sample_size = 1000
 
 # Read the data
-print "Reading data from '{0}' ...".format(input_file_name)
-articles = []
-with open(input_file_name) as f:
-    for line in f:
-        articles.append(json.loads(line))
+articles = read_jsonl(input_file_name)
 
 # Take a sample for testing
 test_sample = articles[:test_sample_size]

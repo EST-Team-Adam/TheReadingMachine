@@ -1,7 +1,17 @@
+import json
 from nltk import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.snowball import SnowballStemmer
+
+
+def read_jsonl(input_file_name):
+    print "Reading data from '{0}' ...".format(input_file_name)
+    articles = []
+    with open(input_file_name) as f:
+        for line in f:
+            articles.append(json.loads(line))
+    return articles
 
 
 def process_text(text, lemmatization=True):
