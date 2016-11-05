@@ -1,6 +1,7 @@
 from thereadingmachine.process import read_jsonl
 from thereadingmachine.process import process_text
 from json import dump
+from time import strptime
 
 # Reading data
 # --------------------------------------------------
@@ -26,9 +27,19 @@ test_sample = articles[:test_sample_size]
 for article in test_sample:
     article['processed_article'] = process_text(article['article'])
 
+# Sort the list and assign article ID.
+#
+# NOTE (Michael): The article is sorted from the oldest to the newest.
+sorted_articles = sorted(articles, key=lambda k: strptime(
+    k['date'], '%Y-%m-%d %H:%M:%S'))
+
+# Assign article ID.
+[article.update({'article_id': i})
+ for i, article in enumerate(sorted_articles)]
+
 # Save the processed file
 # --------------------------------------------------
 with open(output_file_name, 'w') as f:
-    for article in test_sample:
+    for article in sorted_articles:
         dump(article, f)
         f.write('\n')
