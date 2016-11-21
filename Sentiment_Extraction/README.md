@@ -9,7 +9,7 @@ If the aim is to capture wheat related sentiment, sentence by sentence sentiment
 It can be affirmed that a sentiment index can be created by cleaning the articles, selecting only the sentences related to wheat, extracting sentiment from them with a refined dictionary and filtering sentiment scores using the Kalman filter. 
 
 ## Sentiment Extraction ##
-The script _sent_extr.py_ extracts wheat-related sentences from _wheat_articles_ list resulting from Michael Kao's _data_processing.py_ script. The list of wheat labelled articles can be found at the following URL:
+The script _sent_extr.py_ extracts wheat-related sentences from _wheat_articles_ list resulting from Michael Kao's _keyword_extraction.py_ script. The list of wheat labelled articles can be found at the following URL:
 
 https://drive.google.com/open?id=0Bx88UU1MUqu0cElibTB2SXhZVUU
 
@@ -18,9 +18,7 @@ Once sentences are extracted VADER analysis tool is used to analyze sentiment. T
 
 
 ## Sentiment Extraction Test ##
-The script _sent_extr_test.py_ randomly selects one article from wheat labelled articles and extracts wheat-related sentences. The list of wheat labelled articles can be found at the following URL:
-
-https://drive.google.com/open?id=0Bx88UU1MUqu0cElibTB2SXhZVUU
+The script _sent_extr_test.py_ randomly selects one article from wheat labelled articles and extracts wheat-related sentences.
 
 
 Once sentences are extracted, Google NLP and VADER analysis tool are used to analyze sentiment. The result is printed on screen and it's stored in the file _df_test.csv_.
