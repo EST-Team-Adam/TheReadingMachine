@@ -4,6 +4,19 @@ Following Liu's work, a new sentiment extraction attempt will be performed.
 
 The plan is to extract from wheat labelled articles just those few sentences that actually bear wheat-related sentiment. In order to extract the phrases, just the sentences which contain the word "wheat" will be chosen.
 
+If the aim is to capture wheat related sentiment, sentence by sentence sentiment extraction approach gives sharp results, even using VADER sentiment analysis tool. However some work has still to be spent on dictionary improvement and articles cleaning.
+
+It can be affirmed that a sentiment index can be created by cleaning the articles, selecting only the sentences related to wheat, extracting sentiment from them with a refined dictionary and filtering sentiment scores using the Kalman filter. 
+
+## Sentiment Extraction ##
+The script _sent_extr.py_ extracts wheat-related sentences from _wheat_articles_ list resulting from Michael Kao's _data_processing.py_ script. The list of wheat labelled articles can be found at the following URL:
+
+https://drive.google.com/open?id=0Bx88UU1MUqu0cElibTB2SXhZVUU
+
+
+Once sentences are extracted VADER analysis tool is used to analyze sentiment. The result is a matrix called _sentiment_ stored in the file _df.csv_. In the matrix are stored: sentences, compound sentiment scores and sentence date and time.
+
+
 ## Sentiment Extraction Test ##
 The script _sent_extr_test.py_ randomly selects one article from wheat labelled articles and extracts wheat-related sentences. The list of wheat labelled articles can be found at the following URL:
 
