@@ -9,10 +9,9 @@ If the aim is to capture wheat related sentiment, sentence by sentence sentiment
 It can be affirmed that a sentiment index can be created by cleaning the articles, selecting only the sentences related to wheat, extracting sentiment from them with a refined dictionary and filtering sentiment scores using the Kalman filter. 
 
 ## Sentiment Extraction ##
-The script _sent_extr.py_ extracts wheat-related sentences from _wheat_articles_ list resulting from Michael Kao's _keyword_extraction.py_ script. The list of wheat labelled articles can be found at the following URL:
+The script _sent_extr.py_ extracts wheat-related sentences from _wheat_articles_ list resulting from Michael Kao's _keyword_extraction.py_ script on 28/11/2016 data. The list of wheat labelled articles can be found at the following URL:
 
-https://drive.google.com/open?id=0Bx88UU1MUqu0cElibTB2SXhZVUU
-
+https://drive.google.com/file/d/0Bx88UU1MUqu0MGdvOFdzY19FN2c/view?usp=sharing
 
 Once sentences are extracted VADER analysis tool is used to analyze sentiment. The result is a matrix called _sentiment_ stored in the file _df.csv_. In the matrix are stored: sentences, compound sentiment scores and sentence date and time.
 
