@@ -12,7 +12,7 @@ import numpy as np
 with open("wheat_articles.txt", "r") as fp:
     wheat_articles = cPickle.load(fp)
     
-test_sample_size = 1000
+#test_sample_size = 1000
     
 
 ## SENTIMENT EXTRACTION ##
