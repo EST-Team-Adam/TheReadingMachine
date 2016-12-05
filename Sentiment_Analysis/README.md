@@ -16,7 +16,7 @@ extracts the sentences containing the word _"wheat"_ from each article, computes
 and saves the results into a dataframe called _sentiment_. Such dataframe, which contains Article ID, sentences, compound sentiment and 
 date, is then printed out in a csv file called _"df.csv"_.
 
-_"df.csv"_ is in this folder because 15 observations have been manually cancelled due to format inconsistencies, namely missing dates.
+_"df.csv"_ is in this folder because 15 observations have been manually cancelled due to format inconsistencies, namely missing article id.
 
 Wheat articles from _The Reading Machine_ can be found at the following URL:
 
