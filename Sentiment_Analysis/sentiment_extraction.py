@@ -7,18 +7,8 @@ import httplib2                         # Google NLP Authetication
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 import numpy as np
-from collections import Counter         # Sentences and Words Counting
-import re
-import string
-regex = re.compile('[%s]' % re.escape(string.punctuation)) 
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('vader_lexicon')
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 
-# Initialization
+# Initialization #
 with open("wheat_articles.txt", "r") as fp:
     wheat_articles = cPickle.load(fp)
     
@@ -27,24 +17,24 @@ test_sample_size = 1000
 
 ## SENTIMENT EXTRACTION ##
 
-# Google NLP INITIALIZATION
-def retrieve_sentiment(string):
-    credentials = GoogleCredentials.get_application_default()
-    service = discovery.build('language', 'v1beta1', credentials=credentials)
-    service_request = service.documents().analyzeSentiment(
-        body={
-            'document': {
-                'type': 'PLAIN_TEXT',
-                'content': string,
-            }
-        }
-    )
-    response = service_request.execute()
-    polarity = response['documentSentiment']['polarity']
-    magnitude = response['documentSentiment']['magnitude']
-    return {'polarity': polarity, 'magnitude': magnitude}
+## Google NLP INITIALIZATION (Testing purposes) ##
+#def retrieve_sentiment(string):
+#    credentials = GoogleCredentials.get_application_default()
+#    service = discovery.build('language', 'v1beta1', credentials=credentials)
+#    service_request = service.documents().analyzeSentiment(
+#        body={
+#            'document': {
+#                'type': 'PLAIN_TEXT',
+#                'content': string,
+#            }
+#        }
+#    )
+#    response = service_request.execute()
+#    polarity = response['documentSentiment']['polarity']
+#    magnitude = response['documentSentiment']['magnitude']
+#    return {'polarity': polarity, 'magnitude': magnitude}
 
-# VADER & GOOGLE NLP
+# VADER (& GOOGLE NLP) #
 def test_VADER_GoogleNLP(test):
     VADER = list()
     Google_NLP = list()
@@ -75,7 +65,7 @@ def test_VADER_GoogleNLP(test):
     df = pd.concat([df_sentiment['article_id'],df_sentences, df_sentiment['compound'], df_sentiment['Date']], axis=1)          # Panda output, add sentences if possible
     return df
     
-# Data Refinement
+# Data Refinement #
 test1 = wheat_articles#[:test_sample_size]                        # Insert here articles interval to be analyzed
 test = []
 word = "wheat" 
@@ -85,7 +75,7 @@ for i in range(len(test1)):
        if phrase not in test1[i]['article']: 
           test.append(test1[i])
 
-# Sentiment Extraction		
+# Sentiment Extraction #		
 sentiment = pd.DataFrame()
 for i in range(len(test)):
     sentiment = sentiment.append([test_VADER_GoogleNLP(test[i])])
