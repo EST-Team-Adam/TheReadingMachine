@@ -1,16 +1,22 @@
 import json
+from itertools import islice
 from nltk import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.snowball import SnowballStemmer
 
 
-def read_jsonl(input_file_name):
+def read_jsonl(input_file_name, **kwargs):
     print "Reading data from '{0}' ...".format(input_file_name)
     articles = []
     with open(input_file_name) as f:
-        for line in f:
-            articles.append(json.loads(line))
+        if 'size' in kwargs:
+            subset = islice(f, kwargs['size'])
+            for line in subset:
+                articles.append(json.loads(line))
+        else:
+            for line in f:
+                articles.append(json.loads(line))
     return articles
 
 
