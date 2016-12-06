@@ -1,4 +1,5 @@
 from nltk.corpus import wordnet as wn
+import re
 
 # The topic and key word functions assumes that we know the topics
 # already. For example, wheat, rice and soybean related topic.
@@ -20,8 +21,8 @@ def get_topic_keywords(topic):
     #                 iterate.
 
     # Get hypernym synsets.
-    hypernym_synsets = []
-    [hypernym_synsets.extend(synset.hypernyms()) for synset in synsets]
+    # hypernym_synsets = []
+    # [hypernym_synsets.extend(synset.hypernyms()) for synset in synsets]
 
     # Get hyponym synsets.
     hyponym_synsets = []
@@ -40,15 +41,16 @@ def get_topic_keywords(topic):
      for synset in synsets]
 
     # Add the set together
-    complete_synsets = hypernym_synsets + hyponym_synsets + \
+    complete_synsets = hyponym_synsets + \
         part_meronyms_synsets + substance_meronyms_synsets
 
     # Extract keywords of the synsets.
-    keywords = []
+    keywords = [topic]
     [keywords.extend(hyponym_synset.lemma_names())
      for hyponym_synset in complete_synsets]
     # NOTE (Michael): Porbably need to repalace '_' with space annd
     #                 try to match with collocation.
+    keywords = [re.sub('_', ' ', keyword) for keyword in keywords]
     return keywords
 
 
@@ -59,7 +61,10 @@ def extract_text_keywords(text, topic):
     '''
 
     keywords = get_topic_keywords(topic)
+    # located_keywords = set([word
+    #                         for word in text
+    #                         if word in keywords])
     located_keywords = set([word
-                            for word in text
-                            if word in keywords])
-    return located_keywords
+                            for word in keywords
+                            if word in text])
+    return {topic: located_keywords}
