@@ -8,23 +8,19 @@ from time import strptime
 
 # Initiate file names and parameters
 file_prefix = "data/amis_articles"
-version = '27_07_2016'
-input_file_name = '{0}_{1}.jsonl'.format(file_prefix, version)
+version = '27_11_2016'
+input_file_name = '{0}_{1}_indexed.jsonl'.format(file_prefix, version)
 output_file_name = '{0}_{1}_processed.jsonl'.format(file_prefix, version)
 test_sample_size = 1000
 
 # Read the data
 articles = read_jsonl(input_file_name)
 
-# Take a sample for testing
-test_sample = articles[:test_sample_size]
-
-
 # Processing
 # --------------------------------------------------
 
 # TODO (Michael): Check why lemmatization resulted in more words.
-for article in test_sample:
+for article in articles:
     article['processed_article'] = process_text(article['article'])
 
 # Sort the list and assign article ID.
