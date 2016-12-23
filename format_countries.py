@@ -28,7 +28,8 @@ d_countries = defaultdict(list)
 
 for article in articles:
     article.update({'geo_tag': check_countries(article['article'], d_countries)})
-    article
+
+test = 1
 
 
 
