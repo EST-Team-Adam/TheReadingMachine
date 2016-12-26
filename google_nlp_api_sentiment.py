@@ -42,13 +42,13 @@ def retrieve_sentiment(string):
 
 def process_sentiment(line, output_file_folder='data/sentiment/'):
     article = json.loads(line)
-    sentiment = retrieve_sentiment(article['article'])
-    sentiment.update({'id': article['id']})
-    print(sentiment)
     output_file = output_file_folder + article['id'] + ".json"
-    with open(output_file, 'w') as f:
-        json.dump(sentiment, f)
-        f.write('\n')
+    if not os.path.exists(output_file):
+        sentiment = retrieve_sentiment(article['article'])
+        sentiment.update({'id': article['id']})
+        with open(output_file, 'w') as f:
+            json.dump(sentiment, f)
+            f.write('\n')
 
 # NOTE (Michael): It seems that the computational cost of the
 #                 sentiment using the Google NLP API is quite high and
