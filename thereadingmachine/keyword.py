@@ -127,4 +127,4 @@ def get_amis_topic_keywords():
                 print('popping out ' + (grain))
                 topic_keyword.append(grain_keywords.pop(index))
 
-    return wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grains_keywords
+    return wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grain_keywords
