@@ -85,7 +85,7 @@ def extract_geo(input_file_name, output_file_name):
 
 def extract_commodity(input_file_name, output_file_name, wheat_keywords,
                       rice_keywords, maize_keywords, barley_keywords,
-                      soybean_keywords, grains_keywords):
+                      soybean_keywords, grain_keywords):
     with open(input_file_name) as fi, open(output_file_name, 'w') as fo:
         for line in fi:
             article = json.loads(line)
@@ -94,7 +94,7 @@ def extract_commodity(input_file_name, output_file_name, wheat_keywords,
                                            rice_keywords=rice_keywords,
                                            maize_keywords=maize_keywords,
                                            soybean_keywords=soybean_keywords,
-                                           grain_keywords=grains_keywords)
+                                           grain_keywords=grain_keywords)
             tagged_article.update({'id': article['id']})
             json.dump(tagged_article, fo)
             fo.write('\n')

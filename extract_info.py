@@ -29,6 +29,7 @@ extract_commodity(commodity_input_file_name,
                   wheat_keywords=wheat_keywords,
                   rice_keywords=rice_keywords,
                   maize_keywords=maize_keywords,
+                  barley_keywords=barley_keywords,
                   soybean_keywords=soybean_keywords,
                   grain_keywords=grains_keywords)
 extract_date(date_input_file_name, date_output_file_name)
