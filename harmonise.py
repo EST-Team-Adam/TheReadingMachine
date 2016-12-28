@@ -11,7 +11,7 @@ commodity_tag_file_name = '{0}_{1}_commodity_tag.jsonl'.format(
     file_prefix, version)
 topic_tag_file_name = '{0}_{1}_topic_clustered.csv'.format(
     file_prefix, version)
-sentiment_file_name = '{0}_{1}_sentiment.csv'.format(
+sentiment_file_name = '{0}_{1}_sentiment.jsonl'.format(
     file_prefix, version)
 article_date_file_name = '{0}_{1}_article_date.jsonl'.format(
     file_prefix, version)
@@ -27,8 +27,10 @@ commodity_tag_data = pd.DataFrame(commodity_tag_json)
 topic_tag_data = pd.read_csv(topic_tag_file_name, index_col=False)
 article_date_json = read_jsonl(article_date_file_name)
 article_date_data = pd.DataFrame(article_date_json)
+sentiment_data = pd.DataFrame(read_jsonl(sentiment_file_name))
 
-input_data_list = [commodity_tag_data, topic_tag_data, article_date_data]
+input_data_list = [commodity_tag_data,
+                   topic_tag_data, article_date_data, sentiment_data]
 harmonised_data = reduce(lambda left, right: pd.merge(
     left, right, on='id'), input_data_list)
 
