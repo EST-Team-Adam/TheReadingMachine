@@ -52,6 +52,29 @@ wheat_keywords = list([j for i in wheat_keywords for j in i])
     
 ## SENTIMENT EXTRACTION ##
 
+import cPickle                                                            # Reads wheat_articles.txt
+import pandas as pd                                                       # Reading, creating and writing dataframes
+from nltk.tokenize import sent_tokenize                                   # tokenization (not so used at the moment)
+from vaderSentiment.vaderSentiment import sentiment as vaderSentiment     # Sentiment analysis
+from random import choice                                                 # For taking samples
+import numpy as np
+import csv
+
+# Initialization
+with open("wheat_articles.txt", "r") as fp:
+    wheat_articles = cPickle.load(fp)
+
+wheat_keywords = []    
+with open('wheat_keywords.csv','rb') as csvfile:
+     wheat_keywords = csv.reader(csvfile, delimiter=';')
+     wheat_keywords = list(wheat_keywords)
+     
+wheat_keywords = list([j for i in wheat_keywords for j in i])
+    
+#test_sample_size = 1000
+    
+## SENTIMENT EXTRACTION ##
+
 # VADER
 def VADER_analysis(test):
     VADER = list()
