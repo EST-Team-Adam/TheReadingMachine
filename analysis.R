@@ -102,7 +102,87 @@ with(testData, lines(date, predict(sentimentModel, testData),
                      col = "steelblue", lwd = 3))
 
 
-plot(exploratoryData)
+
+with(exploratoryData,
+     plot(marketSentiment, cumulativeSentiment))
+
+with(exploratoryData,
+     plot(diff(marketSentiment), diff(cumulativeSentiment)))
+
+
+runCor = function(x, y, window = 30){
+    totalIter = length(x) - window + 1
+    runCorrelation = vector("numeric", totalIter)
+    for(i in 1:totalIter){
+        index = (0 + i):(window + i - 1)
+        runCorrelation[i] = cor(x[index], y[index])
+    }
+    runCorrelation
+}
+
+rc = with(exploratoryData,
+          runCor(marketSentiment, cumulativeSentiment, window = 90))
+plot(rc, type = "l")
+
+
+
+########################################################################
+## Model
+########################################################################
+
+topicScore = harmonisedData[, 7:106]
+topicSentiment = topicScore * harmonisedData$articleSentiment
+
+weightedSentiment = cbind(date = harmonisedData[, c("date")], topicScore)
+
+summedSentiment =
+    weightedSentiment %>%
+    group_by(date) %>%
+    summarise_each(funs(sum)) %>%
+    subset(., select = -date) %>%
+    cumsum %>%
+    cbind(date = unique(weightedSentiment$date), .)
+
+var = "IGC.GOI"
+wheatModel.df =
+    merge(priceData[, c("date", var)],
+    ## merge(priceData[, c("date", "marketSentiment")],
+          summedSentiment, all.x = TRUE, by = "date") %>%
+    na.omit
+
+
+wheatModel = 
+    wheatModel.df %>%
+    ## subset(., select = -date) %>%
+    ## subset(., select = -date, date < as.Date("2015-06-01")) %>%
+    subset(., select = -date, date > as.Date("2015-01-01")) %>%
+    ## subset(., select = -date,
+    ##        date < as.Date("2015-06-01") &
+    ##        date > as.Date("2013-06-01")) %>%
+    {
+        xvars = as.matrix(.[, -1])
+        yvar = as.matrix(.[, 1])
+        cv.glmnet(xvars, yvar)
+    }
+
+modelCoef = coef(wheatModel, s = "lambda.min")
+predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
+    as.matrix(modelCoef)
+
+
+
+
+with(wheatModel.df,
+{
+    ## plot(date, Wheat, type = "l", ylim = c(0, 350))
+    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 350))
+    ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
+    lines(date, predicted, col = "red")
+})
+
+
+########################################################################
+
 
 
 with(exploratoryData,
