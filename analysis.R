@@ -133,7 +133,8 @@ plot(rc, type = "l")
 topicScore = harmonisedData[, 7:106]
 topicSentiment = topicScore * harmonisedData$articleSentiment
 
-weightedSentiment = cbind(date = harmonisedData[, c("date")], topicScore)
+weightedSentiment = cbind(date = harmonisedData[, c("date")],
+                          topicSentiment)
 
 summedSentiment =
     weightedSentiment %>%
@@ -141,6 +142,7 @@ summedSentiment =
     summarise_each(funs(sum)) %>%
     subset(., select = -date) %>%
     cumsum %>%
+    ## sweep(., 1, rowSums(.), FUN = "/") %>%
     cbind(date = unique(weightedSentiment$date), .)
 
 var = "IGC.GOI"
@@ -148,14 +150,23 @@ wheatModel.df =
     merge(priceData[, c("date", var)],
     ## merge(priceData[, c("date", "marketSentiment")],
           summedSentiment, all.x = TRUE, by = "date") %>%
+    ## NOTE (Michael): There seem to be problem with data prior to 2013.
+    ## subset(., date > as.Date("2013-01-01")) %>%
     na.omit
 
+pdf(file = "check.pdf")
+for(i in 2:NCOL(wheatModel.df)){
+    plot(wheatModel.df[, 1], wheatModel.df[, i], type = "l",
+         xlab = colnames(wheatModel.df)[i])
+}
+graphics.off()
 
+library(glmnet)
 wheatModel = 
     wheatModel.df %>%
     ## subset(., select = -date) %>%
-    ## subset(., select = -date, date < as.Date("2015-06-01")) %>%
-    subset(., select = -date, date > as.Date("2015-01-01")) %>%
+    subset(., select = -date, date < as.Date("2015-06-01")) %>%
+    ## subset(., select = -date, date > as.Date("2015-01-01")) %>%
     ## subset(., select = -date,
     ##        date < as.Date("2015-06-01") &
     ##        date > as.Date("2013-06-01")) %>%
@@ -175,13 +186,17 @@ predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
 with(wheatModel.df,
 {
     ## plot(date, Wheat, type = "l", ylim = c(0, 350))
-    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 350))
+    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
     ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
     lines(date, predicted, col = "red")
 })
 
 
 ########################################################################
+
+
+
+
 
 
 
