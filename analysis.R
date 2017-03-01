@@ -102,12 +102,30 @@ with(testData, lines(date, predict(sentimentModel, testData),
                      col = "steelblue", lwd = 3))
 
 
+with(exploratoryData,
+     plot(Wheat, cumulativeSentiment))
+
+
+with(exploratoryData,
+     plot(lowess(Wheat ~ date)$y,
+          lowess(cumulativeSentiment ~ date)$y))
+
 
 with(exploratoryData,
      plot(marketSentiment, cumulativeSentiment))
 
 with(exploratoryData,
      plot(diff(marketSentiment), diff(cumulativeSentiment)))
+
+
+with(exploratoryData,{
+     plot(date, scale(marketSentiment), type = "l", col = "red")
+     lines(date, scale(cumulativeSentiment))})
+
+with(exploratoryData,{
+    plot(date, scale(lowess(Wheat ~ date)$y),
+         type = "l", col = "red")
+    lines(date, scale(lowess(cumulativeSentiment ~ date)$y))})
 
 
 runCor = function(x, y, window = 30){
@@ -120,9 +138,26 @@ runCor = function(x, y, window = 30){
     runCorrelation
 }
 
+## The running correlation exhibit oscilation between +/-1. This
+## suggest model such as auto-correlation may not perform well.
 rc = with(exploratoryData,
-          runCor(marketSentiment, cumulativeSentiment, window = 90))
+          runCor(marketSentiment, cumulativeSentiment, window = 30))
 plot(rc, type = "l")
+
+
+
+sp = 0.3
+exploratoryData$smoothedWheat =
+    with(exploratoryData, lowess(Wheat ~ date, f = sp)$y)
+
+exploratoryData$smoothedSentiment =
+    with(exploratoryData, lowess(cumulativeSentiment ~ date, f = sp)$y)
+
+with(exploratoryData, plot(smoothedWheat, smoothedSentiment))
+
+rcSmoothed = with(exploratoryData,
+          runCor(smoothedWheat, smoothedSentiment, window = 30))
+plot(rcSmoothed, type = "l", ylim = c(-1, 1))
 
 
 
@@ -145,7 +180,17 @@ summedSentiment =
     ## sweep(., 1, rowSums(.), FUN = "/") %>%
     cbind(date = unique(weightedSentiment$date), .)
 
-var = "IGC.GOI"
+
+## TODO (Michael): Need to smooth both series, the plots above shows
+##                 that smoothed time series has a very high
+##                 correlation.
+priceData$smoothed =
+    with(priceData, lowess(IGC.GOI ~ date, f = 0.1)$y)
+
+    
+
+
+var = "smoothed"
 wheatModel.df =
     merge(priceData[, c("date", var)],
     ## merge(priceData[, c("date", "marketSentiment")],
@@ -154,18 +199,20 @@ wheatModel.df =
     ## subset(., date > as.Date("2013-01-01")) %>%
     na.omit
 
-pdf(file = "check.pdf")
-for(i in 2:NCOL(wheatModel.df)){
-    plot(wheatModel.df[, 1], wheatModel.df[, i], type = "l",
-         xlab = colnames(wheatModel.df)[i])
-}
-graphics.off()
+
+
+## pdf(file = "check.pdf")
+## for(i in 2:NCOL(wheatModel.df)){
+##     plot(wheatModel.df[, 1], wheatModel.df[, i], type = "l",
+##          xlab = colnames(wheatModel.df)[i])
+## }
+## graphics.off()
 
 library(glmnet)
 wheatModel = 
     wheatModel.df %>%
     ## subset(., select = -date) %>%
-    subset(., select = -date, date < as.Date("2015-06-01")) %>%
+    subset(., select = -date, date < as.Date("2013-01-01")) %>%
     ## subset(., select = -date, date > as.Date("2015-01-01")) %>%
     ## subset(., select = -date,
     ##        date < as.Date("2015-06-01") &
@@ -186,7 +233,8 @@ predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
 with(wheatModel.df,
 {
     ## plot(date, Wheat, type = "l", ylim = c(0, 350))
-    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
+    ## plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
+    plot(date, wheatModel.df[, var], type = "l", ylim = c(150, 350))    
     ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
     lines(date, predicted, col = "red")
 })
