@@ -1,7 +1,8 @@
 library(feather)
 library(dplyr)
 library(forecast)
-
+library(reshape2)
+library(ggplot2)
 
 ## library(lubridate)
 ## check = 
@@ -159,6 +160,22 @@ rcSmoothed = with(exploratoryData,
           runCor(smoothedWheat, smoothedSentiment, window = 30))
 plot(rcSmoothed, type = "l", ylim = c(-1, 1))
 
+decomposedWheat = 
+    priceData %>%
+    subset(., select = c("date", "Wheat")) %>%
+    with(., stl(ts(Wheat, freq = 261), s.window = "periodic")) %>%
+    `[[`(1) %>%
+    data.frame
+
+decomposedWheat %>%
+    cbind(date = priceData$date, ., original = priceData$Wheat) %>%
+    melt(., id.vars = "date") %>%
+    ggplot(data = ., aes(x = date, y = value, col = variable)) +
+    geom_line()
+
+priceData$wheatTrend = decomposedWheat$trend
+
+
 
 
 ########################################################################
@@ -181,16 +198,10 @@ summedSentiment =
     cbind(date = unique(weightedSentiment$date), .)
 
 
-## TODO (Michael): Need to smooth both series, the plots above shows
-##                 that smoothed time series has a very high
-##                 correlation.
-priceData$smoothed =
-    with(priceData, lowess(IGC.GOI ~ date, f = 0.1)$y)
-
     
 
 
-var = "smoothed"
+var = "wheatTrend"
 wheatModel.df =
     merge(priceData[, c("date", var)],
     ## merge(priceData[, c("date", "marketSentiment")],
@@ -212,7 +223,7 @@ library(glmnet)
 wheatModel = 
     wheatModel.df %>%
     ## subset(., select = -date) %>%
-    subset(., select = -date, date < as.Date("2013-01-01")) %>%
+    subset(., select = -date, date < as.Date("2015-01-01")) %>%
     ## subset(., select = -date, date > as.Date("2015-01-01")) %>%
     ## subset(., select = -date,
     ##        date < as.Date("2015-06-01") &
