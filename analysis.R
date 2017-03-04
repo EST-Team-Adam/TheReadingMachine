@@ -191,21 +191,67 @@ weightedSentiment = cbind(date = harmonisedData[, c("date")],
 summedSentiment =
     weightedSentiment %>%
     group_by(date) %>%
-    summarise_each(funs(sum)) %>%
+    summarise_each(funs(sum))
+
+
+
+filledSentiment = 
+    merge(summedSentiment,
+          data.frame(date = seq(min(priceData$date),
+                                max(priceData$date), 1)),
+          by = "date", all.y = TRUE)
+filledSentiment[is.na(filledSentiment)] = 0
+
+cumSentiment =
+    filledSentiment %>% {
+    originalDates = .$date
     subset(., select = -date) %>%
-    cumsum %>%
-    ## sweep(., 1, rowSums(.), FUN = "/") %>%
-    cbind(date = unique(weightedSentiment$date), .)
+        cumsum %>%
+        cbind(date = originalDates, .)
+}
+
+
+smoothedSentiment =
+    cumSentiment %>%
+    {
+        originalDates = .$date
+        subset(., select = -date) %>%
+            lapply(., FUN = function(x){
+                smoothed = stl(ts(x, frequency = 365),
+                               s.window = "periodic")[[1]][, 2]
+                as.numeric(smoothed)
+            }) %>%
+            data.frame %>%
+            cbind(date = originalDates, .)
+    } 
+
 
 
     
+
+
+## TODO (Michael): Need to smooth and normalise the topic scorings in
+##                 order to reduce the noices.
+##
+##                 Properties of transformation:
+##
+##                 1. Reduction of frequency or smoothing.
+##                 2. Should not decay, any impact should be permenant.
+##                 3. Normalisation should be time-invariant.
+##                 4. Smoothing should be one-sided only.
+
+
+
+
+
 
 
 var = "wheatTrend"
 wheatModel.df =
     merge(priceData[, c("date", var)],
     ## merge(priceData[, c("date", "marketSentiment")],
-          summedSentiment, all.x = TRUE, by = "date") %>%
+          ## summedSentiment, all.x = TRUE, by = "date") %>%
+          smoothedSentiment, all.x = TRUE, by = "date") %>%    
     ## NOTE (Michael): There seem to be problem with data prior to 2013.
     ## subset(., date > as.Date("2013-01-01")) %>%
     na.omit
@@ -244,8 +290,8 @@ predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
 with(wheatModel.df,
 {
     ## plot(date, Wheat, type = "l", ylim = c(0, 350))
-    ## plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
-    plot(date, wheatModel.df[, var], type = "l", ylim = c(150, 350))    
+    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
+    ## plot(date, wheatModel.df[, var], type = "l", ylim = c(150, 350))
     ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
     lines(date, predicted, col = "red")
 })
