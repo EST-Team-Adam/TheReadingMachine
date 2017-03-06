@@ -33,6 +33,8 @@ The output is a json file which contains per each sentence its date, article id,
 _neutral_ and _compound_ sentiment from VADER and both _polarity_ and _magnitude_ from Google NLP (if re-activated).
 
 The current version extracts 11900 _wheat_, 3059 _soybeans_ and 583 _maize_ related sentences from the whole articles corpus.
+Since the computation takes a long time, the files are at the following link:
+https://drive.google.com/open?id=0Bx88UU1MUqu0OHBsYTBNd3RsRDQ
 
 ## Next Research Topics ##
 
