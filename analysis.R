@@ -77,12 +77,12 @@ exploratoryData = merge(sentimentData, priceData, by = "date",
     mutate(cumulativeSentiment = cumsum(dailySentiment))
 
 
-jpeg(file = "market_cumulative_sentiment_correlation.jpeg",
-     width = 960)
-with(exploratoryData, {
-     plot(marketSentiment, cumulativeSentiment)
-})
-graphics.off()
+## jpeg(file = "market_cumulative_sentiment_correlation.jpeg",
+##      width = 960)
+## with(exploratoryData, {
+##      plot(marketSentiment, cumulativeSentiment)
+## })
+## graphics.off()
 
 splitDate = as.Date("2016-01-30")
 trainData =
@@ -173,9 +173,23 @@ decomposedWheat %>%
     ggplot(data = ., aes(x = date, y = value, col = variable)) +
     geom_line()
 
-priceData$wheatTrend = decomposedWheat$trend
 
+forecastPeriod = 90
+priceData$wheatTrend =
+    c(decomposedWheat$trend[(forecastPeriod + 1):(length(decomposedWheat$trend))],
+      rep(NA, forecastPeriod))
 
+## NOTE (Michael): The smoothing should be one-sided. STL is thus
+##                 perhaps not the right choice.
+with(priceData, {
+    stlSmoothed = stl(ts(Wheat, freq = 261),
+                      s.window = "periodic")[[1]][, 2]
+    sesSmoothed = ses(Wheat, alpha = 0.01, initial = "simple")$fitted
+    data.frame(date, stlSmoothed, sesSmoothed, Wheat, wheatTrend)
+}) %>%
+    melt(., id.vars = "date") %>%
+    ggplot(data = ., aes(x = date, y = value, col = variable)) +
+    geom_line()
 
 
 ########################################################################
@@ -211,14 +225,16 @@ cumSentiment =
 }
 
 
+
+
 smoothedSentiment =
     cumSentiment %>%
     {
         originalDates = .$date
         subset(., select = -date) %>%
             lapply(., FUN = function(x){
-                smoothed = stl(ts(x, frequency = 365),
-                               s.window = "periodic")[[1]][, 2]
+                smoothed = ses(x, alpha = 0.03,
+                               initial = "simple")$fitted
                 as.numeric(smoothed)
             }) %>%
             data.frame %>%
@@ -248,7 +264,7 @@ smoothedSentiment =
 
 var = "wheatTrend"
 wheatModel.df =
-    merge(priceData[, c("date", var)],
+    merge(priceData[, c("date", var, "Wheat")],
     ## merge(priceData[, c("date", "marketSentiment")],
           ## summedSentiment, all.x = TRUE, by = "date") %>%
           smoothedSentiment, all.x = TRUE, by = "date") %>%    
@@ -265,15 +281,18 @@ wheatModel.df =
 ## }
 ## graphics.off()
 
+
+cutoffDate = as.Date("2016-01-01")
+benchmark = 
+    wheatModel.df %>%
+    subset(., select = -date, date < cutoffDate) %>%
+    with(., lm(wheatTrend ~ Wheat)) %>%
+    predict(., wheatModel.df)
+
 library(glmnet)
 wheatModel = 
     wheatModel.df %>%
-    ## subset(., select = -date) %>%
-    subset(., select = -date, date < as.Date("2015-01-01")) %>%
-    ## subset(., select = -date, date > as.Date("2015-01-01")) %>%
-    ## subset(., select = -date,
-    ##        date < as.Date("2015-06-01") &
-    ##        date > as.Date("2013-06-01")) %>%
+    subset(., select = -date, date < cutoffDate) %>%
     {
         xvars = as.matrix(.[, -1])
         yvar = as.matrix(.[, 1])
@@ -282,6 +301,7 @@ wheatModel =
 
 modelCoef = coef(wheatModel, s = "lambda.min")
 predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
+## predicted = cbind(1, as.matrix(wheatModel.df[, 3:4])) %*%    
     as.matrix(modelCoef)
 
 
@@ -291,10 +311,18 @@ with(wheatModel.df,
 {
     ## plot(date, Wheat, type = "l", ylim = c(0, 350))
     plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
+    lines(date, Wheat, col = "green")
     ## plot(date, wheatModel.df[, var], type = "l", ylim = c(150, 350))
     ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
-    lines(date, predicted, col = "red")
+    lines(date,
+          c(rep(NA, forecastPeriod),
+            predicted[1:(length(predicted) - forecastPeriod)]),
+          col = "steelblue")
+    lines(date, benchmark, col = "red")
 })
+
+## NOTE (Michael): The key is to set up a benchmark to show that
+##                 sentiment data actuall helps in prediction.
 
 
 ########################################################################
