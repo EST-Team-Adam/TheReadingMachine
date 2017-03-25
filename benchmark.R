@@ -4,7 +4,8 @@ library(forecast)
 library(reshape2)
 library(ggplot2)
 library(plotly)
-
+library(mlr)
+library(glmnet)
 
 firstStartDate = as.Date("2011-01-01")
 endDate = as.Date("2016-04-18")
@@ -107,8 +108,8 @@ smoothedSentiment =
 ##
 ## The smoothed price in n days is our response as we want to see how
 ## well we can predict the general trend in the future.
-forecastPeriod = 90
-cutoffDate = as.Date("2014-01-01")
+forecastPeriod = 180
+cutoffDate = as.Date("2015-01-01")
 priceData$trend =
     decomposed$trend
 priceData$response =
@@ -127,69 +128,187 @@ model.df =
 
 
 
-benchmark = 
-    model.df %>%
-    subset(., select = c("response", target), date < cutoffDate) %>%
-    with(., lm(response ~ ., data = .)) %>%
-    predict(., model.df)
+## benchmark =
+##     model.df %>%
+##     subset(., select = c("response", target), date < cutoffDate) %>%
+##     with(., lm(response ~ ., data = .)) %>%
+##     predict(., model.df)
 
 
-benchmark2 = 
-    model.df %>%
-    subset(., select = -date, date < cutoffDate) %>%
-    with(., lm(response ~ ., data = .)) %>%
-    predict(., model.df)
-
-library(glmnet)
-model = 
-    model.df %>%
-    subset(., select = -date, date < cutoffDate) %>%
-    {
-        xvars = as.matrix(.[, -1])
-        yvar = as.matrix(.[, 1])
-        cv.glmnet(xvars, yvar)
-    }
-
-modelCoef = coef(model, s = "lambda.min")
-predicted = cbind(1, as.matrix(model.df[, -c(1, 2)])) %*%
-    as.matrix(modelCoef)
+## benchmark2 =
+##     model.df %>%
+##     subset(., select = -date, date < cutoffDate) %>%
+##     with(., lm(response ~ ., data = .)) %>%
+##     predict(., model.df)
 
 
+## model =
+##     model.df %>%
+##     subset(., select = -date, date < cutoffDate) %>%
+##     {
+##         xvars = as.matrix(.[, -1])
+##         yvar = as.matrix(.[, 1])
+##         cv.glmnet(xvars, yvar)
+##     }
+
+## minLambda = model$lambda.min
+## modelCoef = coef(model, s = minLambda)
+## predicted = cbind(1, as.matrix(model.df[, -c(1, 2)])) %*%
+##     as.matrix(modelCoef)
 
 
-with(model.df,
-{
-    plot(date, priceData$trend, col = "green", lwd = 2,
-         ylim = c(0, 550))
-    lines(date, model.df[, target], type = "l", lwd = 1)
-    ## lines(date,
-    ##       c(rep(NA, forecastPeriod),
-    ##         response[1:(length(predicted) - forecastPeriod)]),
-    ##       col = "green")
-    lines(date,
-          c(rep(NA, forecastPeriod),
-            predicted[1:(length(predicted) - forecastPeriod)]),
-          col = "steelblue")
-    lines(date,
-          c(rep(NA, forecastPeriod),
-            benchmark[1:(length(predicted) - forecastPeriod)]),
-          col = "red")
-    lines(date,
-          c(rep(NA, forecastPeriod),
-            benchmark2[1:(length(predicted) - forecastPeriod)]),
-          col = "pink")
-    ## lines(date, benchmark, col = "red")
-    ## lines(date, benchmark2, col = "pink")
-    abline(v = cutoffDate, lty = 2)
-})
+## Helper function for model building and testing.
+shiftPrediction = function(x, shift){
+    c(rep(NA, shift), x[1:(length(x) - shift)])
+}
+
+mlrModelBuilder = function(data, model){
+    task = makeRegrTask(data = data, id = "prediction",
+                        target = "response")
+    learner = makeLearner(model)
+    model = train(learner, task)
+    predict(model, task = task) %>%
+        data.frame %>%
+        subset(select = response, drop = TRUE)
+}
+
+mlrModelBuilder = function(data_train, data_test, model){
+    task = makeRegrTask(data = data_train, id = "prediction",
+                        target = "response")
+    learner = makeLearner(model)
+    model = train(learner, task)
+    predict(model,
+            newdata = rbind(data_train, data_test)) %>%
+        data.frame %>%
+        subset(select = response, drop = TRUE)
+}
+
+## Build and benchmark various model
+
+lmNaiveBenchmark =
+    model.df %>% {
+        data_train =
+            subset(., select = c("response", target),
+                   date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = c("response", target),
+                   date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.lm"))
 
 
-data.frame(variable = modelCoef@Dimnames[[1]],
-           coef = matrix(modelCoef)) %>%
-    arrange(., coef) %>%
-    subset(coef > 0) %>% {
-        print(.)
-        cat(paste0("Number of variables used: ", NROW(.), "\n"))
-    }
-    
+lmComplete =
+    model.df %>% {
+        data_train =
+            subset(., select = -date, date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = -date, date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.lm"))
 
+lassoComplete =
+    model.df %>% {
+        data_train =
+            subset(., select = -date, date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = -date, date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.glmnet"))
+
+
+lassoComplete =
+    model.df %>% {
+        data_train =
+            subset(., select = -date, date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = -date, date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.glmnet"))
+
+
+lassoCV =
+    model.df %>% {
+        data_train =
+            subset(., select = -date, date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = -date, date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.cvglmnet"))
+
+newModel =
+    model.df %>% {
+        data_train =
+            subset(., select = -date, date < cutoffDate) %>%
+            na.omit
+        data_test =
+            subset(., select = -date, date >= cutoffDate)
+        list(data_train = data_train, data_test = data_test)
+    } %>%
+    with(.,
+         mlrModelBuilder(data_train = data_train,
+                         data_test = data_test,
+                         model = "regr.nnet"))
+
+
+combinePrediction = function(models){
+    predictions =
+        lapply(models,
+               FUN = function(x)
+                   shiftPrediction(x, shift = forecastPeriod)) %>%
+        do.call(cbind, .)
+    data.frame(date = model.df$date, response = priceData$trend) %>%
+        cbind(., predictions) %>%
+        melt(id.vars = "date") %>%
+        mutate(linewidth = ifelse(variable == "response", 1, 0.5)) %>%
+        rename(model = variable)
+}
+
+result.df =
+    combinePrediction(list(lmNaiveBenchmark = lmNaiveBenchmark,
+                           lmComplete = lmComplete,
+                           lassoComplete = lassoComplete,
+                           lassoCV = lassoCV,
+                           newModel = newModel))
+
+
+ggplot(result.df, aes(x = date, y = value, col = model,
+                      size = linewidth)) +
+    geom_line() +
+    geom_vline(xintercept = as.numeric(cutoffDate),
+               linetype = "longdash") +
+    scale_size(range = c(0.8, 2), guide = FALSE) +
+    ylim(c(0, 400))
+
+
+## data.frame(variable = modelCoef@Dimnames[[1]],
+##            coef = matrix(modelCoef)) %>%
+##     arrange(., coef) %>%
+##     subset(coef > 0) %>% {
+##         print(.)
+##         cat(paste0("Number of variables used: ", NROW(.), "\n"))
+##     }
