@@ -3,18 +3,23 @@ library(dplyr)
 library(forecast)
 library(reshape2)
 library(ggplot2)
-library(plotly)
-library(mlr)
-library(glmnet)
 
+
+source("functions.R")
+
+########################################################################
+## Initialisation
+########################################################################
 firstStartDate = as.Date("2011-01-01")
 endDate = as.Date("2016-04-18")
 target = "IGC.GOI"
 
-
+########################################################################
 ## Read the datasets
+########################################################################
+
 harmonisedData =
-    read_feather("harmonised_data.feather") %>%
+    read_feather("../../data/harmonised_data.feather") %>%
     data.frame() %>%
     mutate(date = as.Date(date, "%Y-%m-%d")) %>%
     .[order(.$date), ] %>%
@@ -27,22 +32,14 @@ topicVariables =
 
 
 priceData =
-    read.csv("data/igc_goi.csv", stringsAsFactors = FALSE) %>%
+    read.csv("../../data/igc_goi.csv", stringsAsFactors = FALSE) %>%
     mutate(date = as.Date(DATE, "%m/%d/%Y"), DATE = NULL) %>%
     na.omit %>%
     subset(date > firstStartDate & date < endDate)
 
-
-## This basically shows that there is no need to predict the other
-## variables. The trend is practically the same.
-pricePlot = 
-    melt(priceData, id.var = "date") %>%
-    ggplot(data = ., aes(x = date, y = value, col = variable)) +
-    geom_line()
-ggplotly(pricePlot)
-
-
+########################################################################
 ## Add smoothing to the wheat
+########################################################################
 decomposed = 
     priceData %>%
     subset(., select = c("date", target)) %>%
@@ -50,15 +47,10 @@ decomposed =
     `[[`(1) %>%
     data.frame
 
-decomposed %>%
-    cbind(date = priceData$date, ., original = priceData[[target]]) %>%
-    melt(., id.vars = "date") %>%
-    ggplot(data = ., aes(x = date, y = value, col = variable)) +
-    geom_line()
 
-
-
+########################################################################
 ## Process the sentiments
+########################################################################
 
 topicScore = harmonisedData[, 7:106]
 topicSentiment = topicScore * harmonisedData$articleSentiment
@@ -103,11 +95,13 @@ smoothedSentiment =
             cbind(date = originalDates, .)
     } 
 
-
+########################################################################
 ## Create response
-##
+########################################################################
+
 ## The smoothed price in n days is our response as we want to see how
 ## well we can predict the general trend in the future.
+
 forecastPeriod = 180
 cutoffDate = as.Date("2015-01-01")
 priceData$trend =
@@ -125,65 +119,9 @@ model.df =
     ## subset(., date > as.Date("2013-01-01")) %>%
     ## na.omit
 
-
-
-
-## benchmark =
-##     model.df %>%
-##     subset(., select = c("response", target), date < cutoffDate) %>%
-##     with(., lm(response ~ ., data = .)) %>%
-##     predict(., model.df)
-
-
-## benchmark2 =
-##     model.df %>%
-##     subset(., select = -date, date < cutoffDate) %>%
-##     with(., lm(response ~ ., data = .)) %>%
-##     predict(., model.df)
-
-
-## model =
-##     model.df %>%
-##     subset(., select = -date, date < cutoffDate) %>%
-##     {
-##         xvars = as.matrix(.[, -1])
-##         yvar = as.matrix(.[, 1])
-##         cv.glmnet(xvars, yvar)
-##     }
-
-## minLambda = model$lambda.min
-## modelCoef = coef(model, s = minLambda)
-## predicted = cbind(1, as.matrix(model.df[, -c(1, 2)])) %*%
-##     as.matrix(modelCoef)
-
-
-## Helper function for model building and testing.
-shiftPrediction = function(x, shift){
-    c(rep(NA, shift), x[1:(length(x) - shift)])
-}
-
-mlrModelBuilder = function(data, model){
-    task = makeRegrTask(data = data, id = "prediction",
-                        target = "response")
-    learner = makeLearner(model)
-    model = train(learner, task)
-    predict(model, task = task) %>%
-        data.frame %>%
-        subset(select = response, drop = TRUE)
-}
-
-mlrModelBuilder = function(data_train, data_test, model){
-    task = makeRegrTask(data = data_train, id = "prediction",
-                        target = "response")
-    learner = makeLearner(model)
-    model = train(learner, task)
-    predict(model,
-            newdata = rbind(data_train, data_test)) %>%
-        data.frame %>%
-        subset(select = response, drop = TRUE)
-}
-
-## Build and benchmark various model
+########################################################################
+## Build models
+########################################################################
 
 lmNaiveBenchmark =
     model.df %>% {
@@ -274,19 +212,9 @@ newModel =
                          data_test = data_test,
                          model = "regr.nnet"))
 
-
-combinePrediction = function(models){
-    predictions =
-        lapply(models,
-               FUN = function(x)
-                   shiftPrediction(x, shift = forecastPeriod)) %>%
-        do.call(cbind, .)
-    data.frame(date = model.df$date, response = priceData$trend) %>%
-        cbind(., predictions) %>%
-        melt(id.vars = "date") %>%
-        mutate(linewidth = ifelse(variable == "response", 1, 0.5)) %>%
-        rename(model = variable)
-}
+########################################################################
+## Results
+########################################################################
 
 result.df =
     combinePrediction(list(lmNaiveBenchmark = lmNaiveBenchmark,
