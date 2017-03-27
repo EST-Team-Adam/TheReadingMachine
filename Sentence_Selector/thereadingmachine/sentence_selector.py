@@ -1,5 +1,6 @@
 import re
 from nltk.corpus import stopwords
+import nltk
 from thereadingmachine.SBD import SBD                                        # Sentence Boundary Definition and some preliminary cleaning
 from thereadingmachine.sentence_keywords import sentence_keywords
 from nltk.stem.snowball import SnowballStemmer
@@ -31,28 +32,41 @@ def keyword_alarm(article_sentences, checkwords):               # sentence selec
     return selected_sentences
   
   
-def wordslist(words_list):                                    # prepares the checkwords set to be used
+def wordslist(words_list):    
+    words_list1 = list()
+    commwords = ['wheat', 'rice', 'soybeans','soybean', 'maize','corn', 'grain','two-grain','wild','bean','oil','mays']    # by adding words here, they'll remove Kao's keywords   
+    for word in words_list:
+        tokens = list()
+        tokens = nltk.word_tokenize(word)
+        if any(word in commwords for word in tokens):    
+           word = ''                                            
+           words_list1.append(word)
+           words_list1 = filter(None, words_list1) 
+        else:
+           word = word
+           words_list1.append(word)                 
     stemmer = SnowballStemmer("english")
     checkwords = list()
     checkwords2 = list()   
-    for word in words_list:                            # takes single words from extracted keywords
+    for word in words_list1:                            # takes single words from extracted keywords
         checkwords.append(re.findall(r"[\w']+|[.,!?;]", word))
     checkwords = set(sum(checkwords,[]))               # set() for avoiding multiple identical words
     checkwords = [word for word in checkwords if word not in stopwords.words('english')]      # stopwords removal
     for word in checkwords:
         checkwords2.append(stemmer.stem(word))
     return checkwords2
-    
+
 
 def sentences_analyzer(tests, checkwords):  
-  checkwords = wordslist(checkwords)  
+  #checkwords = wordslist(checkwords)  
   analyzed_sentences = list()
+  list_of_words = list()
   for test in tests:
-      article_sentences = SBD(test)
+      article_sentences = SBD(test,checkwords)
       dict = {'sentences':[], 'date':[], 'id':[]}
       if len(keyword_alarm(article_sentences,checkwords))>0:
          dict['date'] = test['date']
          dict['id'] = test['id']
-         dict['sentences'] = keyword_alarm(article_sentences,checkwords)   # resulting dict is dict['commodity'][number(article)][sentence]
+         dict['sentences'] = keyword_alarm(article_sentences,checkwords)   # resulting dict is dict['commodity'][number(article)][sentence]         
          analyzed_sentences.append(dict)
   return analyzed_sentences
