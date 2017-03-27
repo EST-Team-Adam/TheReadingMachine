@@ -52,6 +52,7 @@ def textcleaner(text):
            "   ;" : " ",
            "; :" : " ",
            "               " : " ",
+           "\'s" : " ",
            "\\" : " "
            }
     for i, j in dic.iteritems():
