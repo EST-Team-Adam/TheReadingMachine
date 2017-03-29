@@ -1,0 +1,7 @@
+*~
+*#*
+*.pkl
+*.DS_Store
+*.jsonl
+*.csv
+*.pyc
