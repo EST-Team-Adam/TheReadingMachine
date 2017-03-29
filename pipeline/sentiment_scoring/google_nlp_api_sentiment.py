@@ -6,6 +6,7 @@ from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
 # Initialisation
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/mk/.other_credentials/google_nlp_api/google_api_test_credentials.json'
 file_prefix = "data/amis_articles"
 version = '27_11_2016'
 input_file_name = '{0}_{1}_processed.jsonl'.format(file_prefix, version)
@@ -37,6 +38,7 @@ def retrieve_sentiment(string):
     except:
         polarity = 0
         magnitude = 0
+
     return {'polarity': polarity, 'magnitude': magnitude}
 
 
