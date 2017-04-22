@@ -1,7 +1,8 @@
 library(feather)
 library(dplyr)
 library(forecast)
-
+library(reshape2)
+library(ggplot2)
 
 ## library(lubridate)
 ## check = 
@@ -76,12 +77,12 @@ exploratoryData = merge(sentimentData, priceData, by = "date",
     mutate(cumulativeSentiment = cumsum(dailySentiment))
 
 
-jpeg(file = "market_cumulative_sentiment_correlation.jpeg",
-     width = 960)
-with(exploratoryData, {
-     plot(marketSentiment, cumulativeSentiment)
-})
-graphics.off()
+## jpeg(file = "market_cumulative_sentiment_correlation.jpeg",
+##      width = 960)
+## with(exploratoryData, {
+##      plot(marketSentiment, cumulativeSentiment)
+## })
+## graphics.off()
 
 splitDate = as.Date("2016-01-30")
 trainData =
@@ -102,7 +103,234 @@ with(testData, lines(date, predict(sentimentModel, testData),
                      col = "steelblue", lwd = 3))
 
 
-plot(exploratoryData)
+with(exploratoryData,
+     plot(Wheat, cumulativeSentiment))
+
+
+with(exploratoryData,
+     plot(lowess(Wheat ~ date)$y,
+          lowess(cumulativeSentiment ~ date)$y))
+
+
+with(exploratoryData,
+     plot(marketSentiment, cumulativeSentiment))
+
+with(exploratoryData,
+     plot(diff(marketSentiment), diff(cumulativeSentiment)))
+
+
+with(exploratoryData,{
+     plot(date, scale(marketSentiment), type = "l", col = "red")
+     lines(date, scale(cumulativeSentiment))})
+
+with(exploratoryData,{
+    plot(date, scale(lowess(Wheat ~ date)$y),
+         type = "l", col = "red")
+    lines(date, scale(lowess(cumulativeSentiment ~ date)$y))})
+
+
+runCor = function(x, y, window = 30){
+    totalIter = length(x) - window + 1
+    runCorrelation = vector("numeric", totalIter)
+    for(i in 1:totalIter){
+        index = (0 + i):(window + i - 1)
+        runCorrelation[i] = cor(x[index], y[index])
+    }
+    runCorrelation
+}
+
+## The running correlation exhibit oscilation between +/-1. This
+## suggest model such as auto-correlation may not perform well.
+rc = with(exploratoryData,
+          runCor(marketSentiment, cumulativeSentiment, window = 30))
+plot(rc, type = "l")
+
+
+
+sp = 0.3
+exploratoryData$smoothedWheat =
+    with(exploratoryData, lowess(Wheat ~ date, f = sp)$y)
+
+exploratoryData$smoothedSentiment =
+    with(exploratoryData, lowess(cumulativeSentiment ~ date, f = sp)$y)
+
+with(exploratoryData, plot(smoothedWheat, smoothedSentiment))
+
+rcSmoothed = with(exploratoryData,
+          runCor(smoothedWheat, smoothedSentiment, window = 30))
+plot(rcSmoothed, type = "l", ylim = c(-1, 1))
+
+decomposedWheat = 
+    priceData %>%
+    subset(., select = c("date", "Wheat")) %>%
+    with(., stl(ts(Wheat, freq = 261), s.window = "periodic")) %>%
+    `[[`(1) %>%
+    data.frame
+
+decomposedWheat %>%
+    cbind(date = priceData$date, ., original = priceData$Wheat) %>%
+    melt(., id.vars = "date") %>%
+    ggplot(data = ., aes(x = date, y = value, col = variable)) +
+    geom_line()
+
+
+forecastPeriod = 90
+priceData$wheatTrend =
+    c(decomposedWheat$trend[(forecastPeriod + 1):(length(decomposedWheat$trend))],
+      rep(NA, forecastPeriod))
+
+## NOTE (Michael): The smoothing should be one-sided. STL is thus
+##                 perhaps not the right choice.
+with(priceData, {
+    stlSmoothed = stl(ts(Wheat, freq = 261),
+                      s.window = "periodic")[[1]][, 2]
+    sesSmoothed = ses(Wheat, alpha = 0.01, initial = "simple")$fitted
+    data.frame(date, stlSmoothed, sesSmoothed, Wheat, wheatTrend)
+}) %>%
+    melt(., id.vars = "date") %>%
+    ggplot(data = ., aes(x = date, y = value, col = variable)) +
+    geom_line()
+
+
+########################################################################
+## Model
+########################################################################
+
+topicScore = harmonisedData[, 7:106]
+topicSentiment = topicScore * harmonisedData$articleSentiment
+
+weightedSentiment = cbind(date = harmonisedData[, c("date")],
+                          topicSentiment)
+
+summedSentiment =
+    weightedSentiment %>%
+    group_by(date) %>%
+    summarise_each(funs(sum))
+
+
+
+filledSentiment = 
+    merge(summedSentiment,
+          data.frame(date = seq(min(priceData$date),
+                                max(priceData$date), 1)),
+          by = "date", all.y = TRUE)
+filledSentiment[is.na(filledSentiment)] = 0
+
+cumSentiment =
+    filledSentiment %>% {
+    originalDates = .$date
+    subset(., select = -date) %>%
+        cumsum %>%
+        cbind(date = originalDates, .)
+}
+
+
+
+
+smoothedSentiment =
+    cumSentiment %>%
+    {
+        originalDates = .$date
+        subset(., select = -date) %>%
+            lapply(., FUN = function(x){
+                smoothed = ses(x, alpha = 0.03,
+                               initial = "simple")$fitted
+                as.numeric(smoothed)
+            }) %>%
+            data.frame %>%
+            cbind(date = originalDates, .)
+    } 
+
+
+
+    
+
+
+## TODO (Michael): Need to smooth and normalise the topic scorings in
+##                 order to reduce the noices.
+##
+##                 Properties of transformation:
+##
+##                 1. Reduction of frequency or smoothing.
+##                 2. Should not decay, any impact should be permenant.
+##                 3. Normalisation should be time-invariant.
+##                 4. Smoothing should be one-sided only.
+
+
+
+
+
+
+
+var = "wheatTrend"
+wheatModel.df =
+    merge(priceData[, c("date", var, "Wheat")],
+    ## merge(priceData[, c("date", "marketSentiment")],
+          ## summedSentiment, all.x = TRUE, by = "date") %>%
+          smoothedSentiment, all.x = TRUE, by = "date") %>%    
+    ## NOTE (Michael): There seem to be problem with data prior to 2013.
+    ## subset(., date > as.Date("2013-01-01")) %>%
+    na.omit
+
+
+
+## pdf(file = "check.pdf")
+## for(i in 2:NCOL(wheatModel.df)){
+##     plot(wheatModel.df[, 1], wheatModel.df[, i], type = "l",
+##          xlab = colnames(wheatModel.df)[i])
+## }
+## graphics.off()
+
+
+cutoffDate = as.Date("2016-01-01")
+benchmark = 
+    wheatModel.df %>%
+    subset(., select = -date, date < cutoffDate) %>%
+    with(., lm(wheatTrend ~ Wheat)) %>%
+    predict(., wheatModel.df)
+
+library(glmnet)
+wheatModel = 
+    wheatModel.df %>%
+    subset(., select = -date, date < cutoffDate) %>%
+    {
+        xvars = as.matrix(.[, -1])
+        yvar = as.matrix(.[, 1])
+        cv.glmnet(xvars, yvar)
+    }
+
+modelCoef = coef(wheatModel, s = "lambda.min")
+predicted = cbind(1, as.matrix(wheatModel.df[, -c(1, 2)])) %*%
+## predicted = cbind(1, as.matrix(wheatModel.df[, 3:4])) %*%    
+    as.matrix(modelCoef)
+
+
+
+
+with(wheatModel.df,
+{
+    ## plot(date, Wheat, type = "l", ylim = c(0, 350))
+    plot(date, wheatModel.df[, var], type = "l", ylim = c(0, 550))
+    lines(date, Wheat, col = "green")
+    ## plot(date, wheatModel.df[, var], type = "l", ylim = c(150, 350))
+    ## plot(date, marketSentiment, type = "l", ylim = c(0, 350))
+    lines(date,
+          c(rep(NA, forecastPeriod),
+            predicted[1:(length(predicted) - forecastPeriod)]),
+          col = "steelblue")
+    lines(date, benchmark, col = "red")
+})
+
+## NOTE (Michael): The key is to set up a benchmark to show that
+##                 sentiment data actuall helps in prediction.
+
+
+########################################################################
+
+
+
+
+
 
 
 with(exploratoryData,
