@@ -9,12 +9,12 @@ The final output is a JSON file per each named entity, in this version _wheat_, 
 scores, article id and dates.
 
 ## The script ##
-The script is based on _TheReadingMachine_ and, using as input the file _"amis_articles_27_11_2016_indexed.jsonl"_, delivers the file
-_"amis_articles_27_11_2016_sentences_from_indexed.jsonl"_ as output.
+The script is based on _TheReadingMachine_ and, using as input the file _"amis_articles_27_11_2016_indexed.jsonl"_, delivers 6 files
+_"amis_articles_27_11_2016_sentences_*commodity_name*.jsonl"_ as output.
 
 The output contains the same content of the input plus a dictionary of sentences (keys), topic-keywords (dictionary keys) and two sets of sentiment values: VADER extracted sentiment and Google NLP extracted sentiment.
 
-The algorithm is composed by nine files which have been added to _TheReadingMachine_: the main script _"Sentence_Topic_POC.py"_ and the auxiliary scripts _sentence_selector.py_, _"SBD.py"_, _"textcleaner.py"_, _"sentence_tagger.py"_, _"sentence_keywords.py"_, _"article_keywords.py"_, _"sentiment_VADER.py"_ and _"sentiment_GoogleNLP.py"_. The tenth file contained in _thereadingmachine_ is _keyword.py_ created by Michael Kao.
+The algorithm is composed by nine files which have been added to _TheReadingMachine_: the main script _"selector_POC.py"_ and the auxiliary scripts _sentence_selector.py_, _"SBD.py"_, _"textcleaner.py"_, _"sentence_tagger.py"_, _"sentence_keywords.py"_, _"article_keywords.py"_, _"sentiment_VADER.py"_ and _"sentiment_GoogleNLP.py"_. The tenth file contained in _thereadingmachine_ is _keyword.py_ created by Michael Kao.
 
 _"Sentence_Topic_POC.py"_ is the main script: it loads the modules, loads the two functions needed for topic-keywords extraction, loads
 the articles and runs the analysis. Once the topic-keywords are extracted, they are incorporated into the article corpus sentence by sentence and the whole output is then written into a new JSONL file.
