@@ -1,7 +1,8 @@
 import re
 from nltk.corpus import stopwords
 import nltk
-from thereadingmachine.SBD import SBD                                        # Sentence Boundary Definition and some preliminary cleaning
+from thereadingmachine.SBD import SBD  
+from thereadingmachine.SBD import SBD_twitter                                      # Sentence Boundary Definition and some preliminary cleaning
 from thereadingmachine.sentence_keywords import sentence_keywords
 from nltk.stem.snowball import SnowballStemmer
 from thereadingmachine.sentiment_VADER import VADER2
@@ -63,6 +64,23 @@ def sentences_analyzer(tests, checkwords):
   list_of_words = list()
   for test in tests:
       article_sentences = SBD(test,checkwords)
+      dict = {'sentences':[], 'date':[], 'id':[]}
+      if len(keyword_alarm(article_sentences,checkwords))>0:
+         dict['date'] = test['date']
+         dict['id'] = test['id']
+         dict['sentences'] = keyword_alarm(article_sentences,checkwords)   # resulting dict is dict['commodity'][number(article)][sentence]         
+         analyzed_sentences.append(dict)
+  return analyzed_sentences
+  
+  
+  
+  
+def sentences_analyzer_twitter(tests, checkwords):  
+  #checkwords = wordslist(checkwords)  
+  analyzed_sentences = list()
+  list_of_words = list()
+  for test in tests:
+      article_sentences = SBD_twitter(test,checkwords)
       dict = {'sentences':[], 'date':[], 'id':[]}
       if len(keyword_alarm(article_sentences,checkwords))>0:
          dict['date'] = test['date']
