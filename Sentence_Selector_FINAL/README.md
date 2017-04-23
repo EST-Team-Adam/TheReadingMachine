@@ -9,8 +9,8 @@ The final output is a JSON file per each named entity, in this version _wheat_, 
 scores, article id and dates.
 
 ## The script ##
-The script is based on _TheReadingMachine_ and, using as input the file _"amis_articles_27_11_2016_indexed.jsonl"_, delivers the file
-_"amis_articles_27_11_2016_sentences_from_indexed.jsonl"_ as output.
+The script is based on _TheReadingMachine_ and, using as input the file _"amis_articles_27_11_2016_indexed.jsonl"_, delivers 6 files
+_"amis_articles_27_11_2016_sentences_*commodity_name*.jsonl"_ as output.
 
 The output contains the same content of the input plus a dictionary of sentences (keys), topic-keywords (dictionary keys) and two sets of sentiment values: VADER extracted sentiment and Google NLP extracted sentiment.
 
@@ -39,9 +39,11 @@ _(line 30) sentiment_Google.append(GoogleNLP2(sentence))_
 _(line 31) selected_sentences = zip(selection, sentiment_VADER, sentiment_Google)_
 
 ## The Input ##
-Script inputs are: _amis_articles_27_11_2016_indexed.jsonl_ and _key.py_.
+Script inputs are: _amis_articles_27_11_2016_indexed.jsonl_, _twitter_timelines.csv_ and _key.py_.
 
 _amis_articles_27_11_2016_indexed.jsonl_ contains 140971 indexed articles. The version of this file can be changed and there shouldn't be problems.
+
+_twitter_timelines.csv_ contains 203744 different tweets scraped from twitter: these tweets are in different languages, therefore non-english ones are dropped from the analysis because the current dictionary supports just english language.
 
 _key.py_ is Michael Kao keywords extracting script. It gives back _wheat_keywords_, _rice_keywords_, _maize_keywords_, _barley_keywords_, _soybean_keywords_ and _grain_keywords_ that are then used to select the sentences.
 
@@ -66,6 +68,20 @@ _amis_articles_27_11_2016_sentences_maize.jsonl_
 _amis_articles_27_11_2016_sentences_barley.jsonl_ 
 
 _amis_articles_27_11_2016_sentences_grain.jsonl_ 
+
+Twitter output is composed by 6 files of english language selected sentences from the tweets with sentiment scores. The files are:
+
+_twitter_tweets_wheat.jsonl_ (2148 tweets)
+
+_twitter_tweets_rice.jsonl_ (377 tweets)
+
+_twitter_tweets_soybeans.jsonl_ (172 tweets)
+
+_twitter_tweets_maize.jsonl_ (63 tweets)
+
+_twitter_tweets_barley.jsonl_ (107 tweets)
+
+_twitter_tweets_grain.jsonl_ (575 tweets)
 
 ## How to call the main functions ##
 
@@ -105,6 +121,44 @@ _SBD(tests[0],checkwords) = []_
 _sentence_keywords(SBD(tests[1],checkwords)[0]) = ['Kenya', 'rice production']_
 
 _sentence_keywords(SBD(tests[1],checkwords)[3]) = ['Brown', 'rice imports', 'brown rice']_
+
+## Twitter Data ##
+
+The analysis of twitter data relies on the Sentences Selector and the data have been adapted to fit its algorithm.
+
+The main script is called _selector_twitter.py_ which relies on _twitter.py_, _sentence_selector.py_ and _keyword.py_ (and the module _json_ for 'dumping' the output). The last important module used is _langid_ for language identification, more info can be found at the following URL: https://github.com/saffsd/langid.py .
+
+_selector_twitter.py_ first reads the twitter data contained in _twitter_timelines.csv_ using the function _twitter_reader_ in _twitter.py_, then calls the function _twitter_formatter_ from _twitter.py_ to adapt twitter data to _sentence_selector.py_ functions, then calls _get_amis_topic_keywords_ from Michael Kao _keyword.py_ for commodity keyword to look for and at the end calls _sentences_analyzer_twitter_ function in _sentence_selector.py_ for sentences selection and sentiment extraction. 
+
+It has to be underlined that while the steps from _get_amis_topic_keywords_ follow the sme path of articles case, there are a few nuisances that have to be underlined in the data formatting part. First of all twitter data fields 'text;;;;;;;;;' and 'created_at' are  respectively substituted with 'article' and 'date' to fit the Sentence Selector algorithm. Then all empty tweets (missing article or date) are dropped out from the analysis. At last _langid_ is used to find english tweets and drop the non-english ones.
+
+When data are correctly formatted they are passed to the a slightly modified version of the sentence selector, namely the function _sentences_analyzer_twitter_ . The only difference with the original _sentences_analyzer_ used in articles is that it relies on a Sentence Boundaries Definer called _SBD_twitter_ that takes care (ignores) unicode special characters which stopped the analysis performed by the articles _SBD_ . This diference can be found in the file _SBD.py_, function _SBD_twitter_ in line 29:
+
+_article_sentences = sent_tokenize(textcleaner(unicode(test['article'],errors='ignore')))_
+
+in particular it's _unicode(test['article'],errors='ignore')_ that in the articles _SBD_ is just _article_sentences = sent_tokenize(textcleaner(test['article']))_ .
+
+The module _langid_ for language recognition can be tested using
+
+_langid.classify("This is a test")_
+
+which will return _('en', -54.41310358047485)_ where the first field is the language.
+
+_langid_ helps in two ways: on one hand by identifying other languages tweets, on the other hand by identifying part of the tweets containing just urls, hashtags et cetera which most of the times do not directly convey any sentiment in their wordings. In the latter case one should open the urls to find and extract the tweet sentiment from there. As a proof:
+
+_langid.classify("#Nutrition https://t.co/s4mP7kG8Ti https://t\xe2\x80\xa6;;;;;;;;', 'id': '695564581364703232', 'screen_name': 'FAOstatistics'}_
+
+returns _('da', -14.586467266082764)_
+
+This last intuition helps, but is not perfect because many tweets are still recognised as english if they contain a part written in english, as for example
+
+langid.classify("RT @fourmilier: #NowReading | #blogs on development and agriculture https://t.co/NqXlWFcPFC https://t.co/JSSFhiA79n;;;;;;;;")
+
+which returns ('en', -64.45757293701172)
+
+However this is not a big issue, because VADER dictionary assigns to this tipology of tweets 0 compound sentiment, as proven by
+
+_RT @fourmilier: #NowReading | #blogs on development and agriculture https://t.co/NqXlWFcPFC https://t.co/JSSFhiA79n;;;;;;;; {'neg': 0.0, 'neu': 1.0, 'pos': 0.0, 'compound': 0.0}_
 
 ## Breaking down the topic-keywords extraction ##
 
