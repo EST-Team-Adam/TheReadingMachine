@@ -96,11 +96,11 @@ class TopicModel(object):
 
         topic_min_dist = np.where(self.topic_dist == self.topic_dist[np.where(self.topic_dist > 0.01)].min())[0]
 
-        print('The two closest Topics have a cosine similarity of ' + str(self.topic_dist[np.where(self.topic_dist >.6)].min()))
-        print('')
-        print('Topic 1: ' + str(self.nmf_topics[topic_min_dist[0]]))
-        print('')
-        print('Topic 2: ' + str(self.nmf_topics[topic_min_dist[1]]))
+        #print('The two closest Topics have a cosine similarity of ' + str(self.topic_dist[np.where(self.topic_dist >.6)].min()))
+        #print('')
+        #print('Topic 1: ' + str(self.nmf_topics[topic_min_dist[0]]))
+        #print('')
+        #print('Topic 2: ' + str(self.nmf_topics[topic_min_dist[1]]))
 
 
     def cluster_topics(self, k=None, plot=False, save_fig=False):
