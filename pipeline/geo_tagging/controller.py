@@ -95,15 +95,17 @@ def geotag_article(articles, country_dict):
     ''' Append geographical location to existing articles.
     '''
 
-    geotagged_article = []
+    geotagged_articles = []
     for article in articles:
-        geotagged_article.append(
+        geotagged_articles.append(
             {
                 'id': article['id'],
                 'geo_tag': remove_non_ascii(
                     check_countries(article['article'], country_dict)),
             })
-    return geotagged_article
+
+    flattened_articles = flatten_geotagged_article(geotagged_articles)
+    return flattened_articles
 
 
 def flatten_geotagged_article(articles):
