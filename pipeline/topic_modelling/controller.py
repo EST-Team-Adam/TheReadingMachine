@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 import nltk
+import string
 import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction import text
-from utils import preprocessor
+from scipy.cluster.hierarchy import fcluster
 
 
 class TopicModel(object):
@@ -147,3 +148,51 @@ class TopicModel(object):
         # maybe use the mean here?
         self.clustered_topics = self.nmf_documents_topics.apply(
             lambda x: x.groupby(self.cluster_assignments).mean(), axis=1)
+
+
+def remove_propers_POS(s):
+    tagged = nltk.pos_tag(s.split())  # use NLTK's part of speech tagger
+    non_propernouns = [word for word,
+                       pos in tagged if pos != 'NNP' and pos != 'NNPS']
+    return ''.join([n + " " for n in non_propernouns])
+
+
+def preprocessor(s):
+    s = remove_propers_POS(s)
+    # remove numericals and punctuation
+    s = "".join(
+        [c if c not in string.punctuation else ' '
+         for c in s if not c.isdigit()])
+    s = s.lower()
+    return s
+
+
+def model_article_topic(articles):
+    '''Wrapper function to create a Topic Model instance, default
+    n_features = 10000, n_topics = 100.
+    '''
+
+    model = TopicModel()
+
+    # Featurize the corpus and fit the model
+    model.featurize(articles['article'])
+    model.fit()
+
+    # Extract the topics, defaulst to 100 topics
+    model.get_topics()
+
+    # Cluster of the topics
+    model.cluster_topics(plot=True, save_fig=False)
+
+    # Prune the dendogram
+    cluster_assignments = fcluster(model.linkage_matrix, t=1.12)
+
+    # Group loadings by cluster
+    model.clustered_topics = model.nmf_documents_topics.apply(lambda x:
+                                                              x.groupby(
+                                                                  cluster_assignments).mean(),
+                                                              axis=1)
+    # Re-assign the id
+    model.nmf_documents_topics['id'] = articles['id']
+
+    return model
