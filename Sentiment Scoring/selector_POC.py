@@ -1,7 +1,9 @@
 from thereadingmachine.process import read_jsonl
 from thereadingmachine.keyword import get_amis_topic_keywords                # Checkwords (from Michael)
 from thereadingmachine.sentence_selector import sentences_analyzer
+from thereadingmachine.sentence_selector import all_sentences_analyzer
 from thereadingmachine.sentence_selector import wordslist
+from thereadingmachine.sentence_selector import articles_sentiment
 from json import dump
 
 import random     # for random sample
@@ -17,6 +19,8 @@ soybeans_output_file_name = '{0}_{1}_sentences_soybeans.jsonl'.format(file_prefi
 maize_output_file_name = '{0}_{1}_sentences_maize.jsonl'.format(file_prefix, version)
 barley_output_file_name = '{0}_{1}_sentences_barley.jsonl'.format(file_prefix, version)
 grains_output_file_name = '{0}_{1}_sentences_grains.jsonl'.format(file_prefix, version)
+all_sentences_output_file_name = '{0}_{1}_all_sentences.jsonl'.format(file_prefix, version)
+articles_scores_output_file_name = '{0}_{1}_articles_scores.jsonl'.format(file_prefix, version)
 test_sample_size = 1000
 
 
@@ -29,51 +33,81 @@ articles = read_jsonl(input_file_name)
 tests = articles            # Full analysis
 
 
-# WIP
+# Keywords extraction
 wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grains_keywords = get_amis_topic_keywords()
+
+
+# Test
+
+#all_sentences = all_sentences_analyzer(tests)
+#analyzed_sentences = all_sentences
+
+#articles_scores = articles_sentiment(analyzed_sentences)
+
 
 
 # Sentences Extraction
 
+all_sentences = all_sentences_analyzer(tests)
+articles_scores = articles_sentiment(all_sentences)
 
 
 commodity = ['wheat']
 checkwords = commodity + wordslist(wheat_keywords)       
 wheat_sentences = sentences_analyzer(tests, checkwords)
+wheat_articles_scores = articles_sentiment(wheat_sentences)
 
 
 
 commodity = ['rice']
 checkwords = commodity + wordslist(rice_keywords)                                
 rice_sentences = sentences_analyzer(tests, checkwords)
+rice_articles_scores = articles_sentiment(rice_sentences)
 
 
 
 commodity = ['soybeans']
 checkwords = commodity + wordslist(soybean_keywords)       
 soybeans_sentences = sentences_analyzer(tests, checkwords)
+soybeans_articles_scores = articles_sentiment(soybeans_sentences)
 
 
 
 commodity = ['maize']
 checkwords = commodity + wordslist(maize_keywords)          
 maize_sentences = sentences_analyzer(tests, checkwords)
+maize_articles_scores = articles_sentiment(maize_sentences)
 
 
 
 commodity = ['barley']
 checkwords = commodity + wordslist(barley_keywords)          
 barley_sentences = sentences_analyzer(tests, checkwords)
+barley_articles_scores = articles_sentiment(barley_sentences)
 
 
 
 commodity = ['grains']
 checkwords = commodity + wordslist(grains_keywords)          
 grains_sentences = sentences_analyzer(tests, checkwords)
+grains_articles_scores = articles_sentiment(grains_sentences)
 
 
 
-# Save the processed file
+# Save the processed file  # WIP write output file for all the scores
+
+with open(all_sentences_output_file_name, 'w') as f:
+     dump(all_sentences, f)
+     f.write('\n')
+
+
+
+with open(articles_scores_output_file_name, 'w') as f:
+     dump(articles_scores, f)
+     f.write('\n')
+     
+
+
 
 with open(wheat_output_file_name, 'w') as f:
      dump(wheat_sentences, f)
@@ -117,4 +151,3 @@ with open(grains_output_file_name, 'w') as f:
 #commodity = ['rice']
 #checkwords = commodity + wordslist(rice_keywords)                                 # It happens that a few people are called Rice
 #rice_sentences = sentences_analyzer(tests[0:2], checkwords)
-     
