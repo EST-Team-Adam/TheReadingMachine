@@ -53,7 +53,17 @@ def textcleaner(text):
            "; :" : " ",
            "               " : " ",
            "\'s" : " ",
-           "\\" : " "
+           "\\" : " ",
+           "        You must be" : " ",
+           "initializetabcontent(\"wholetab\")" : " ",
+           "var _bizo_data_partner_id = \"513\";" : " ",
+           "var _bizo_p = ((\"https:\" == document.location.protocol) ?\"" : " ",
+           "https: sjs." : " ",
+           ";     " : " ",
+           "var _bizo_p = ((\"https:\" == document.location.protocol) ?'" : " ",
+           "\");  " : " ",
+           "http: js." : " ",
+           "document.write(unescape(\"%3Cscript src=\'\" + _bizo_p + \"bizographics.com/convert_data.js?partner_id=\" + _bizo_data_partner_id + \"\' type=\'text/javascript\'%3E%3C/script%3E" : " "
            }
     for i, j in dic.iteritems():
         text = text.replace(i, j)
