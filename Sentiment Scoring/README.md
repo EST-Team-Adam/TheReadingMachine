@@ -8,6 +8,8 @@ it's analysed using VADER sentiment analysis tool and Google NLP and the result 
 The final output is a JSON file per each named entity, in this version _wheat_, _soybeans_ and _maize_, which contains sentences, sentiment
 scores, article id and dates.
 
+Each article sentiment score is given in order to get a grasp of the overall situation. Such scores are contained in the output file _"amis_articles_27_11_2016_all_sentences"_ and _"amis_articles_27_11_2016_articles_scores"_: in the first file they can be found on a sentence by sentence basis, while in the second one they are collapsed in a single positive, negative, neutral and compound sentiment score using the mean of each sentence sentiment score per article.
+
 ## The script ##
 The script is based on _TheReadingMachine_ and, using as input the file _"amis_articles_27_11_2016_indexed.jsonl"_, delivers 6 files
 _"amis_articles_27_11_2016_sentences_*commodity_name*.jsonl"_ as output.
@@ -19,13 +21,15 @@ The algorithm is composed by nine files which have been added to _TheReadingMach
 _"Sentence_Topic_POC.py"_ is the main script: it loads the modules, loads the two functions needed for topic-keywords extraction, loads
 the articles and runs the analysis. Once the topic-keywords are extracted, they are incorporated into the article corpus sentence by sentence and the whole output is then written into a new JSONL file.
 
-_"Sentence_Selector.py"_ is the script which contains the three script main functions: _keyword_alarm_, _wordslist_ and _sentences_analyzer_.
+_"Sentence_Selector.py"_ is the script which contains the three script main functions: _keyword_alarm_, _wordslist_ and _sentences_analyzer_. It contains also the function _articles_sentiment_ which delivers a single positive, nuetral, negative and compound sentiment score per each article.
 
 The function _wordslist_ is connected to Michael Kao's extracted keywords and gives the checkwords that the program will look for. Given the structure of the whole algorithm, a few of these keywords have been dropped in order to avoid too general sentences.
 
 The function _keyword_alarm_ checks if a topic-keyword extracted from the extractor is mirrored in the elaborated commodities keywords: if it is, the sentence is stored.
 
 The function _sentences_analyzer_ takes the sentences from _keyword_alarm_ and, using both VADER and Google NLP, extracts the sentiment and stores all the results (article id, date, sentences, sentiments) in an output that will be converted in a JSON file. This function is the most important, given the fact that uses all the others.
+
+The function _articles_sentiment_ delivers a positive, neutral, negative and compound sentiment score per each article: the sentiment score is obtained by dividing each article into sentences, analyze each sentence using VADER and/or Google NLP and then taking the mean of all article sentence positive, negative, neutral and compound sentiment scores. The outcomes are a list of dictionaries, one per each article, with all analyzed sentences, article date and id and positive, negative, neutral and compound sentiment scores (called _all_sentences_) and another list of dictionaries, also here one per article, with article date and id and article positive, neutral, negative and compound sentiment score (called _articles_scores_). 
 
 _"SBD.py"_ and _"textcleaner.py"_ are auxiliary scripts in _TheReadingMachine_ which define each sentence boundaries and clean each article from few special characters (as /r) and a few french words which prevented the use of Google NLP for sentiment extraction. 
 Given the fact that the word _"Rice"_ can be either the commodity or a surname, this part of the script drops the sentences in which the word _Rice_ appears as a surname. Obviously the script in written following a flexible approach, therefore it checks for any given commodity name if it's used as a surname for any given sentence.
@@ -82,6 +86,12 @@ _twitter_tweets_maize.jsonl_ (63 tweets)
 _twitter_tweets_barley.jsonl_ (107 tweets)
 
 _twitter_tweets_grain.jsonl_ (575 tweets)
+
+All articles output from the whole corpus analysis is composed by two files:
+
+_"amis_articles_27_11_2016_all_sentences"_
+
+_"amis_articles_27_11_2016_articles_scores"_
 
 ## How to call the main functions ##
 
