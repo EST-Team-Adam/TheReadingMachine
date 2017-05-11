@@ -106,12 +106,12 @@ db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
 
 # Sent email
 # --------------------
-send_success_email = EmailOperator(
-    task_id='send_success_email',
-    to=default_args['email'],
-    subject='The Reading Machine executed successfully',
-    html_content='',
-    dag=dag)
+# send_success_email = EmailOperator(
+#     task_id='send_success_email',
+#     to=default_args['email'],
+#     subject='The Reading Machine executed successfully',
+#     html_content='',
+#     dag=dag)
 
 ########################################################################
 # Create dependency
@@ -139,4 +139,4 @@ db_data_harmonisation.set_upstream(data_harmonisation)
 price_model.set_upstream(db_data_harmonisation)
 db_price_model.set_upstream(price_model)
 
-send_success_email.set_upstream(db_price_model)
+# send_success_email.set_upstream(db_price_model)
