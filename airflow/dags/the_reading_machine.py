@@ -41,7 +41,7 @@ db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
 # Sentiment scoring
 # --------------------
 sentiment_scoring_script_path = os.path.join(
-    process_directory, 'sentiment_scoring/processor.py')
+    process_directory, 'sentiment_scoring/sentiment_scoring.py')
 sentiment_scoring_command = 'python {}'.format(
     sentiment_scoring_script_path)
 sentiment_scoring = BashOperator(bash_command=sentiment_scoring_command,
