@@ -6,3 +6,5 @@
 *.csv
 *.pyc
 *.feather
+airflow/logs
+.Rhistory
