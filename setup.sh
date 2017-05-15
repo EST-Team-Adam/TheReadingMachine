@@ -9,7 +9,11 @@ pip install virtualenv
 virtualenv --verbose venv
 
 # Start virtual environment
-source venv/bin/activate
+# Load virtualenv
+if [[ "$VIRTUAL_ENV" == "" ]]
+then
+    source venv/bin/activate
+fi
 
 # Install Python packages
 pip install -r requirements.txt
