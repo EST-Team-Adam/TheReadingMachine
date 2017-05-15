@@ -1,39 +1,93 @@
-# TheReadingMachine
-A Mean, Lean, Reading Machine
+# TheReadingMachine - A Mean, Lean, Reading Machine
+
+This repository contains the complete implementation of the
+`thereadingmachine`, a program to scrap, process, score and model the
+sentiment of news articles for the purpose of predicting the future
+trend of commodity prices.
+
+## Structure
+
+The repository is structured as follow:
+
+```
+root/
+  ├── airflow/
+  ├── data/
+  ├── pipeline/
+  ├── thereadingmachine/
+  ├── sandbox/  
+  ├── ...
+  └── requirements.txt
+```
+
+### airflow
+
+This folder contains the configuration, logs, and the database for
+running airflow.
+
+When a new procedure is to be added to the pipeline, it needs to be
+added to the [DAG file](airflow/dags/the_reading_machine.py).
+
+### data
+
+This folder contains all the data required. This includes the database
+(`the_reading_machine.db`), and all supplementary data such as `nltk
+corpus`.
+
+
+### pipeline
+
+All processes that will eventually be scheduled in the pipeline will
+be implemented under this folder.
+
+The standard structure is to have a sub-folder containing two
+files. `controller.*` and `processor.*`. The `controller.*` will
+contain all the class and function definitions, while the
+`processor.*` file will load the definitions and perform the actual
+processing.
+
+This is designed for maximum flexibility during the development. The
+`controller.*` class and functions will eventually be refactored into
+`thereadingmachine`.
+
+
+### thereadingmachine
+
+This will eventually become a Python module when the codes in the
+pipeline are refactored during the end of the phase of the
+development.
+
+### sandbox
+
+Any old, obsolete, unused code will be moved here for future
+reference.
 
 
 
-# Sentiment Index Minimum Viable Product (MVP) #
 
-This one-pager is a summary of the work left to produce the first prototype of the sentiment index.
+## Setup
 
-1. [Extensive overview of available dictionaries](https://github.com/EST-Team-Adam/TheReadingMachine/issues/6) (@albertomun): this step will entail finding publicly available dictionaries and exploring their pros and cons, including how much they are in agreement and how they could be combined, if possible at all. **(Priority: Moderate)**
-2. [Identification of labeled data sources](https://github.com/EST-Team-Adam/TheReadingMachine/issues/10) (@mkao006): this step entails both a literature review to understand how they have been labeled and some data mining to find already labeled text basis to build sentiment index. **(Priority: Low)**
- 1. Minimum Result: writing a one pager on how to combine labeled sources
- 2. Stretch Goal: train a model to construct a dictionary
-3. [Data Cleaning](https://github.com/EST-Team-Adam/TheReadingMachine/issues/5) (@mkao006 & @albertomun): the text now available is pretty raw. It should be cleaned and formatted to make the analysis easier. **(Priority: High)**
-4. [Key Word Identification](https://github.com/EST-Team-Adam/TheReadingMachine/issues/4) (@mrpozzi & @albertomun): Identify important words that describe the information contained in the article. **(Priority: Moderate)**
- 1. Minimum Result: TF/IDF weighting of the words in order to reduce noise and identify important terms
- 2. Stretch Goal: building a more complex model using (maybe) POS tagging.
-5. [Labeling data sources using nlp model](https://github.com/EST-Team-Adam/TheReadingMachine/issues/3) (@mrpozzi & @marcogarieri): this step consists on identifying more refined tags for the articles. **(Priority: High)**
- 1. Minimum Result: Build a simple, MF based, topic model
- 2. Stretch Goal: Actually apply the model to extract meaningful topics.
-6. [Creation of commodity tags](https://github.com/EST-Team-Adam/TheReadingMachine/issues/1) (@albertomun): **(Priority: High)**
- 1. Minimum Result: Tag the article with the commodity they are mostly related to. 
- 2. Stretch Goal: tagging each article with multiple commodities.
-7. [Creation of location tags](https://github.com/EST-Team-Adam/TheReadingMachine/issues/2) (@marcogarieri): Tag the relevant location(s) the article is referred to **(Priority: High)**
-8. Creation of topic tags (@marcogarieri): apply the topic model to the articles **(Priority: Low)**
- 1. Minimum Result: extract manually some topic tags
- 2. Stretch Goal: use the topic model developed to extract the tags
-9. Extraction and validation of sentiment index (@mkao006 & @marcogarieri): Create a first prototype of the actual index combining the above information. **(Priority: Moderate)**
-Minimum Result: Come up with a plan to benchmark the results. 
-Stretch Goal: Building a first multi-feature model of the index. 
-
-Both Minimum Results and Stretch Goals are to be seen in terms of the MVP construction. All the above points can be extensively expanded as described in this document [WIP](https://docs.google.com/document/d/1iM5CWtOyfk_H7aGOuXKP46ueairymlT2ZcOhImLxTGE/edit).
+After pulling the repository, follow the setup guide to install the
+necessary requirements and configurations.
 
 
 
-## Modularizing the Work ##
 
-Work should be modularized in order to plug other components later to be able to expand the analysis. As much as possible the code should be written in a general enough way to allow new components to be plugged in. The interface will have to accept generalized arguments that should be easily extensible. This will be hard considering the time crunch and may have to be enforced post-hoc by refactoring the code committed by others to enforce the coding standards without slowing the whole team down forcing everyone to climb the learning curve.
- (Lead: @mkao006. Secondary: @mrpozzi)
+## Starting and killing the pipeline
+
+There are two scripts provided to `start` and `kill` the pipeline.
+
+To start the pipeline, simply execute
+
+```sh
+./start_pipeline.sh
+```
+
+You can then navigate to `localhost:8080` to see the web interface of
+the pipeline.
+
+To kill the pipeline, simple enter the following in the command line.
+
+```sh
+./kill_pipeline.sh
+```
