@@ -5,25 +5,25 @@ shiftPrediction = function(x, shift){
     c(rep(NA, shift), x[1:(length(x) - shift)])
 }
 
-mlrModelBuilder = function(data, model){
+## mlrModelBuilder = function(data, model){
+##     task = makeRegrTask(data = data, id = "prediction",
+##                         target = "response")
+##     learner = makeLearner(model)
+##     model = train(learner, task)
+##     predict(model, task = task) %>%
+##         data.frame %>%
+##         subset(select = response, drop = TRUE)
+## }
+
+mlrModelBuilder = function(data, subset, model_name){
     task = makeRegrTask(data = data, id = "prediction",
                         target = "response")
-    learner = makeLearner(model)
-    model = train(learner, task)
-    predict(model, task = task) %>%
-        data.frame %>%
-        subset(select = response, drop = TRUE)
-}
-
-mlrModelBuilder = function(data_train, data_test, model){
-    task = makeRegrTask(data = data_train, id = "prediction",
-                        target = "response")
-    learner = makeLearner(model)
-    model = train(learner, task)
-    predict(model,
-            newdata = rbind(data_train, data_test)) %>%
-        data.frame %>%
-        subset(select = response, drop = TRUE)
+    learner = makeLearner(model_name)
+    model = train(learner, task, subset = subset)
+    ## predict(model, newdata = data_test) %>%
+    ##     data.frame %>%
+    ##     subset(select = response, drop = TRUE)
+    list(model = model, task = task)
 }
 
 
