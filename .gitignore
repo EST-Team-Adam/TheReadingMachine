@@ -8,3 +8,4 @@
 *.feather
 airflow/logs
 .Rhistory
+venv/
