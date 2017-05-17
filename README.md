@@ -5,6 +5,29 @@ This repository contains the complete implementation of the
 sentiment of news articles for the purpose of predicting the future
 trend of commodity prices.
 
+
+## Setup
+
+First of all, make sure you have the database `the_reading_machine.db`
+in the `data` directory.
+
+Then run the setup script
+
+``sh
+source setup.sh
+```
+
+This will setup `virtualenv`, install all the `thereadingmachine`
+package, and any other dependency from `requirements.txt`.
+
+All dependent `nltk` dataset will also be downloaded into the `data`
+directory.
+
+Next it will configure `airflow` and setup the airflow database
+(`airflow.db`) that will store all information about the pipeline
+scheduling.
+
+
 ## Structure
 
 The repository is structured as follow:
@@ -61,15 +84,6 @@ development.
 
 Any old, obsolete, unused code will be moved here for future
 reference.
-
-
-
-
-## Setup
-
-After pulling the repository, follow the setup guide to install the
-necessary requirements and configurations.
-
 
 
 
