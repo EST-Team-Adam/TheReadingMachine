@@ -21,4 +21,4 @@ else
 fi
 
 # Start scheduler
-airflow scheduler
+airflow scheduler&
