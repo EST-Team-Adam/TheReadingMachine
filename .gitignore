@@ -1,11 +1,27 @@
+# General
 *~
 *#*
-*.pkl
 *.DS_Store
+*.Rhistory
+
+
+# Data files and db
+*.pkl
 *.jsonl
 *.csv
 *.pyc
+*.db
 *.feather
-airflow/logs
-.Rhistory
+
+# Virtualenv folder
 venv/
+
+# Airflow
+airflow/logs
+
+# NLTK data
+data/corpora/
+data/sentiment/
+data/taggers/
+data/tokenizers/
+
