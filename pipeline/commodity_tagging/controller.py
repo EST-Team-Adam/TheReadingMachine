@@ -1,6 +1,6 @@
-from nltk.corpus import wordnet as wn
 import re
-import json
+from nltk.corpus import wordnet as wn
+
 
 # The topic and key word functions assumes that we know the topics
 # already. For example, wheat, rice and soybean related topic.
@@ -71,37 +71,37 @@ def extract_text_keywords(text, topic):
     return {topic: located_keywords}
 
 
-def tag_commodity(article, wheat_keywords, rice_keywords,
+def tag_commodity(article, article_field, wheat_keywords, rice_keywords,
                   maize_keywords, soybean_keywords,
                   grain_keywords):
-    keyword = {'hasWheat': 0,
-               'hasRice': 0,
-               'hasMaize': 0,
-               'hasSoybean': 0,
-               'hasGrain': 0
+    keyword = {'containWheat': 0,
+               'containRice': 0,
+               'containMaize': 0,
+               'containSoybean': 0,
+               'containGrain': 0
                }
 
     wheat_match = set(wheat_keywords).intersection(
-        article['processed_article'])
+        article[article_field])
     rice_match = set(rice_keywords).intersection(
-        article['processed_article'])
+        article[article_field])
     maize_match = set(maize_keywords).intersection(
-        article['processed_article'])
+        article[article_field])
     soybean_match = set(soybean_keywords).intersection(
-        article['processed_article'])
+        article[article_field])
     grain_match = set(grain_keywords).intersection(
-        article['processed_article'])
+        article[article_field])
 
     if len(wheat_match) > 0:
-        keyword['hasWheat'] = 1
+        keyword['containWheat'] = 1
     if len(rice_match) > 0:
-        keyword['hasRice'] = 1
+        keyword['containRice'] = 1
     if len(maize_match) > 0:
-        keyword['hasMaize'] = 1
+        keyword['containMaize'] = 1
     if len(soybean_match) > 0:
-        keyword['hasSoybean'] = 1
+        keyword['containSoybean'] = 1
     if len(grain_match) > 0:
-        keyword['hasGrain'] = 1
+        keyword['containGrain'] = 1
     return keyword
 
 
@@ -128,3 +128,17 @@ def get_amis_topic_keywords():
                 topic_keyword.append(grain_keywords.pop(index))
 
     return wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grain_keywords
+
+
+def commodity_tag_article(articles, article_field, id_field):
+    wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grain_keywords = get_amis_topic_keywords()
+
+    commodity_tagged_articles = list()
+    for article in articles:
+        tagged = tag_commodity(article, article_field, wheat_keywords,
+                               rice_keywords, maize_keywords, soybean_keywords,
+                               grain_keywords)
+        tagged[id_field] = article.get(id_field)
+        commodity_tagged_articles.append(tagged)
+
+    return commodity_tagged_articles
