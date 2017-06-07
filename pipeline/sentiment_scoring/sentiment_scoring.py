@@ -2,8 +2,7 @@ import os
 import sqlalchemy
 import pandas as pd
 from sqlalchemy import create_engine
-from thereadingmachine.sentence_selector import all_sentences_analyzer
-from thereadingmachine.sentence_selector import articles_sentiment
+from thereadingmachine.sentence_selector import whole_articles
 
 # Configuration
 data_dir = os.environ['DATA_DIR']
@@ -18,8 +17,7 @@ articles = pd.read_sql(sql_query, engine, parse_dates=['date'])
 articles_dict = articles.to_dict(orient='records')
 
 # Score the articles
-scored_sentences = all_sentences_analyzer(articles_dict)
-scored_articles = articles_sentiment(scored_sentences)
+scored_articles = whole_articles(articles_dict)
 
 # Save output file
 field_type = {'id': sqlalchemy.types.Integer(),
