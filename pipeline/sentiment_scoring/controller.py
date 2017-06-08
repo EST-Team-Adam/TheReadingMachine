@@ -14,7 +14,7 @@ from os.path import abspath, join, dirname
 
 # GOOGLE NLP ENGINE
 
-@retry(tries=5)#(stop_max_attempt_number=10, wait_random_min=1000, wait_random_max=10000)
+@retry#(stop_max_attempt_number=10, wait_random_min=1000, wait_random_max=10000)
 def retrieve_sentiment(string):
     credentials = GoogleCredentials.get_application_default()
     service = discovery.build('language', 'v1beta1', credentials=credentials)
