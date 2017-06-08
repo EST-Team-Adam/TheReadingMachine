@@ -14,7 +14,11 @@ from os.path import abspath, join, dirname
 
 # GOOGLE NLP ENGINE
 
+<<<<<<< HEAD:pipeline/sentiment_scoring/controller.py
 @retry(tries=5)#(stop_max_attempt_number=10, wait_random_min=1000, wait_random_max=10000)
+=======
+@retry#(stop_max_attempt_number=10, wait_random_min=1000, wait_random_max=10000)
+>>>>>>> 8d20bf46a21202d9f82aee8a3b67ebe3bb9028e7:pipeline/sentiment_scoring/controller.py
 def retrieve_sentiment(string):
     credentials = GoogleCredentials.get_application_default()
     service = discovery.build('language', 'v1beta1', credentials=credentials)
@@ -612,4 +616,8 @@ def whole_articles(tests):     # whole articles analysis
         results.append(dict)
         #print results
     return results
+<<<<<<< HEAD:pipeline/sentiment_scoring/controller.py
     
+=======
+    
+>>>>>>> 8d20bf46a21202d9f82aee8a3b67ebe3bb9028e7:pipeline/sentiment_scoring/controller.py
