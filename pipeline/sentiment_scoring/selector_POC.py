@@ -2,8 +2,9 @@ import os
 from thereadingmachine.process import read_jsonl
 from thereadingmachine.keyword import get_amis_topic_keywords
 from thereadingmachine.sentence_selector import sentences_analyzer
+from thereadingmachine.sentence_selector import all_sentences_analyzer
 from thereadingmachine.sentence_selector import wordslist
-from thereadingmachine.sentence_selector import whole_articles
+from thereadingmachine.sentence_selector import articles_sentiment
 from json import dump
 
 # import random     # for random sample
@@ -18,9 +19,6 @@ input_file_name = '{0}/amis_articles_{1}.jsonl'.format(
 
 
 # Initiate file names and parameters
-
-whole_articles_output_file_name = '{0}/amis_articles_{1}_whole_articles.jsonl'.format(
-    data_dir, dataset_version)
 wheat_output_file_name = '{0}/amis_articles_{1}_sentences_wheat.jsonl'.format(
     data_dir, dataset_version)
 rice_output_file_name = '{0}/amis_articles_{1}_sentences_rice.jsonl'.format(
@@ -46,7 +44,7 @@ articles = read_jsonl(input_file_name)
 
 # Test Article
 # tests = random.sample(articles,test_sample_size) # Test analysis
-tests = articles[1:1000]
+tests = articles
 
 # Keywords extraction
 wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords, grains_keywords = get_amis_topic_keywords()
@@ -62,7 +60,8 @@ wheat_keywords, rice_keywords, maize_keywords, barley_keywords, soybean_keywords
 
 # Sentences Extraction
 
-articles_analysis = whole_articles(tests)      # performs an analysis on the whole article
+all_sentences = all_sentences_analyzer(tests)
+articles_scores = articles_sentiment(all_sentences)
 
 commodity = ['wheat']
 checkwords = commodity + wordslist(wheat_keywords)
@@ -102,19 +101,14 @@ grains_articles_scores = articles_sentiment(grains_sentences)
 
 # Save the processed file  # WIP write output file for all the scores
 
-#with open(all_sentences_output_file_name, 'w') as f:
-#    dump(all_sentences, f)
-#    f.write('\n')
+with open(all_sentences_output_file_name, 'w') as f:
+    dump(all_sentences, f)
+    f.write('\n')
 
 
-#with open(articles_scores_output_file_name, 'w') as f:
-#    dump(articles_scores, f)
-#    f.write('\n')
-
-
-with open(whole_articles_output_file_name, 'w') as f:
-     dump(articles_analysis, f)
-     f.write('\n')
+with open(articles_scores_output_file_name, 'w') as f:
+    dump(articles_scores, f)
+    f.write('\n')
 
 
 with open(wheat_output_file_name, 'w') as f:
