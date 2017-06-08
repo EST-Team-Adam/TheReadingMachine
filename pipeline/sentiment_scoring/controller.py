@@ -612,4 +612,8 @@ def whole_articles(tests):     # whole articles analysis
         results.append(dict)
         #print results
     return results
+<<<<<<< HEAD:pipeline/sentiment_scoring/controller.py
     
+=======
+    
+>>>>>>> 8d20bf46a21202d9f82aee8a3b67ebe3bb9028e7:pipeline/sentiment_scoring/controller.py
