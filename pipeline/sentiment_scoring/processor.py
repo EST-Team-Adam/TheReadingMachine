@@ -2,7 +2,8 @@ import os
 import sqlalchemy
 import pandas as pd
 from sqlalchemy import create_engine
-from thereadingmachine.sentence_selector import whole_articles
+#from thereadingmachine.sentence_selector import whole_articles
+import controller as ctr
 
 # Configuration
 data_dir = os.environ['DATA_DIR']
@@ -17,7 +18,7 @@ articles = pd.read_sql(sql_query, engine, parse_dates=['date'])
 articles_dict = articles.to_dict(orient='records')
 
 # Score the articles
-scored_articles = whole_articles(articles_dict)
+scored_articles = ctr.whole_articles(articles_dict)
 
 # Save output file
 field_type = {'id': sqlalchemy.types.Integer(),
@@ -25,7 +26,8 @@ field_type = {'id': sqlalchemy.types.Integer(),
               'compound_sentiment': sqlalchemy.types.Float(),
               'negative_sentiment': sqlalchemy.types.Float(),
               'neutral_sentiment': sqlalchemy.types.Float(),
-              'positive_sentiment': sqlalchemy.types.Float()
+              'positive_sentiment': sqlalchemy.types.Float(),
+              'Google_NLP': sqlalchemy.types.Float()
               }
 
 flattened_article_df = pd.DataFrame(scored_articles)
