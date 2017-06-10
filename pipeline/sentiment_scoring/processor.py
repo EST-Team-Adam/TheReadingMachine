@@ -18,7 +18,7 @@ articles_list = articles.to_dict(orient='records')
 
 # Score the articles
 scored_articles = ctr.article_sentiment_scoring(
-    articles=articles_list[:500], article_col='article', id_col='id',
+    articles=articles_list, article_col='article', id_col='id',
     date_col='date', method=['VADER', 'GOOGLE_NLP'], to_df=True)
 
 # Save output file
