@@ -18,8 +18,8 @@ articles_list = articles.to_dict(orient='records')
 
 # Score the articles
 scored_articles = ctr.article_sentiment_scoring(
-    articles=articles_list, article_col='article', id_col='id',
-    date_col='date', method=['VADER', 'GOOGLE_NLP'])
+    articles=articles_list[:500], article_col='article', id_col='id',
+    date_col='date', method=['VADER', 'GOOGLE_NLP'], to_df=True)
 
 # Save output file
 field_type = {'id': sqlalchemy.types.Integer(),
@@ -30,6 +30,5 @@ field_type = {'id': sqlalchemy.types.Integer(),
               'positive_sentiment': sqlalchemy.types.Float()
               }
 
-flattened_article_df = pd.DataFrame(scored_articles)
-flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,
-                            if_exists='replace', dtype=field_type)
+scored_articles.to_sql(con=engine, name=target_data_table, index=False,
+                       if_exists='replace', dtype=field_type)
