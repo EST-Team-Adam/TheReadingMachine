@@ -3,13 +3,16 @@ import numpy as np
 import scipy as sp
 import nltk
 import string
+import Stemmer
 import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
 from sklearn.feature_extraction import text
 from scipy.cluster.hierarchy import fcluster
+
 
 
 class TopicModel(object):
@@ -40,19 +43,21 @@ class TopicModel(object):
         self.n_features = n_features
         self.n_topics = n_topics
         self.linkage_matrix = None
+    
+    
 
     def featurize(self, corpus):
         """
 
         """
+        english_stemmer = Stemmer.Stemmer('en')
+        class StemmedTfidfVectorizer(TfidfVectorizer):
+            def build_analyzer(self):
+                analyzer = super(TfidfVectorizer, self).build_analyzer()
+                return lambda doc: english_stemmer.stemWords(analyzer(doc))
         self.corpus = corpus.apply(lambda x: preprocessor(x.decode('utf-8')))
-        self.tf_vectorizer = text.CountVectorizer(
-            max_df=.95,
-            min_df=2,
-            ngram_range=(1, 1),
-            max_features=self.n_features,
-            tokenizer=nltk.word_tokenize,
-            stop_words=list(text.ENGLISH_STOP_WORDS))
+        self.tf_vectorizer = StemmedTfidfVectorizer(max_df=.95, min_df=2, stop_words='english', analyzer='word', 
+                                       ngram_range=(1,1), max_features=self.n_features)
         self.tf = self.tf_vectorizer.fit_transform(self.corpus)
         self.tf_feature_names = self.tf_vectorizer.get_feature_names()
         self.tf_freqs = [(word, self.tf.getcol(idx).sum())
@@ -160,7 +165,7 @@ def remove_propers_POS(s):
 
 
 def preprocessor(s):
-    s = remove_propers_POS(s)
+    #s = remove_propers_POS(s)
     # remove numericals and punctuation
     s = "".join(
         [c if c not in string.punctuation else ' '
