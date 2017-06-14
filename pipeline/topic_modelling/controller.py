@@ -14,6 +14,12 @@ from sklearn.feature_extraction import text
 from scipy.cluster.hierarchy import fcluster
 
 
+class StemmedTfidfVectorizer(TfidfVectorizer):
+    def build_analyzer(self):
+        analyzer = super(TfidfVectorizer, self).build_analyzer()
+        english_stemmer = Stemmer.Stemmer('en')
+        return lambda doc: english_stemmer.stemWords(analyzer(doc))
+
 
 class TopicModel(object):
 
@@ -23,7 +29,8 @@ class TopicModel(object):
 
     def __init__(self,
                  n_features=10000,
-                 n_topics=100):
+                 n_topics=100, 
+                 remove_nouns=False):
         """
         Create a new Topic Model.
 
@@ -43,6 +50,7 @@ class TopicModel(object):
         self.n_features = n_features
         self.n_topics = n_topics
         self.linkage_matrix = None
+        self.remove_nouns = remove_nouns
     
     
 
@@ -50,12 +58,8 @@ class TopicModel(object):
         """
 
         """
-        english_stemmer = Stemmer.Stemmer('en')
-        class StemmedTfidfVectorizer(TfidfVectorizer):
-            def build_analyzer(self):
-                analyzer = super(TfidfVectorizer, self).build_analyzer()
-                return lambda doc: english_stemmer.stemWords(analyzer(doc))
-        self.corpus = corpus.apply(lambda x: preprocessor(x.decode('utf-8')))
+        
+        self.corpus = corpus.apply(lambda x: preprocessor(x.decode('utf-8'), self.remove_nouns))
         self.tf_vectorizer = StemmedTfidfVectorizer(max_df=.95, min_df=2, stop_words='english', analyzer='word', 
                                        ngram_range=(1,1), max_features=self.n_features)
         self.tf = self.tf_vectorizer.fit_transform(self.corpus)
@@ -155,17 +159,16 @@ class TopicModel(object):
         # maybe use the mean here?
         self.clustered_topics = self.nmf_documents_topics.apply(
             lambda x: x.groupby(self.cluster_assignments).mean(), axis=1)
-
-
+        
 def remove_propers_POS(s):
-    tagged = nltk.pos_tag(s.split())  # use NLTK's part of speech tagger
+    tagged = nltk.pos_tag(nltk.word_tokenize(s))  # use NLTK's part of speech tagger
     non_propernouns = [word for word,
                        pos in tagged if pos != 'NNP' and pos != 'NNPS']
     return ''.join([n + " " for n in non_propernouns])
 
-
-def preprocessor(s):
-    #s = remove_propers_POS(s)
+def preprocessor(s, remove_nouns=False):
+    if remove_nouns:
+        s = remove_propers_POS(s)
     # remove numericals and punctuation
     s = "".join(
         [c if c not in string.punctuation else ' '
