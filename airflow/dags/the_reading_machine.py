@@ -35,8 +35,27 @@ dag = DAG('the_reading_machine',
 
 # Article scrapping
 # --------------------
-scraper = DummyOperator(task_id='scraper', dag=dag)
+article_scraper_script_path = os.path.join(
+    process_directory, 'article_scraper/processor.py')
+article_scraper_command = 'python {}'.format(
+    article_scraper_command_path)
+article_scraper = BashOperator(bash_command=article_scraper_command,
+                               task_id='article_scraper',
+                               params=default_args,
+                               dag=dag)
 db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
+
+# Twitter scraping
+# -------------------
+twitter_scraper_script_path = os.path.join(
+    process_directory, 'twitter_scraper/processor.py')
+twitter_scraper_command = 'python {}'.format(
+    twitter_scraper_command_path)
+twitter_scraper = BashOperator(bash_command=twitter_scraper_command,
+                               task_id='twitter_scraper',
+                               params=default_args,
+                               dag=dag)
+db_raw_twitter = DummyOperator(task_id='db_raw_twitter', dag=dag)
 
 # Sentiment scoring
 # --------------------
