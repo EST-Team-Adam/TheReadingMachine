@@ -553,7 +553,6 @@ def article_sentiment_scoring(articles, article_col, id_col, date_col, method,
             article_score['positive_sentiment'] = article_score.pop('pos')
             article_score['neutral_sentiment'] = article_score.pop('neu')
             article_score['negative_sentiment'] = article_score.pop('neg')
-
             article_score.update({id_col: article.get(id_col),
                                   date_col: article.get(date_col)})
             score.update(article_score)
