@@ -11,13 +11,10 @@ getHarmonisedData = function(){
 
 
 transformHarmonisedData = function(harmonisedData){
-
     ## Transformation
     transformedData = 
         harmonisedData %>%
-        mutate(date = as.Date(date, "%Y-%m-%d")) %>%
-        ## Drop the use onlyt the compound sentiment for now
-        subset(., select=-c(positive_sentiment, neutral_sentiment, negative_sentiment))
+        mutate(date = as.Date(date, "%Y-%m-%d"))
     colnames(transformedData) = gsub("[[:space:]]", "_", colnames(transformedData))
     transformedData
 }
@@ -25,7 +22,7 @@ transformHarmonisedData = function(harmonisedData){
 getTopicVariables = function(){
     ## Set topic variable columns
     topicVariables =
-        dbGetQuery(con, "PRAGMA table_info(TopicModel)") %>%
+        dbGetQuery(con, "PRAGMA table_info(NoposTopicModel)") %>%
         subset(., select = name, subset = name != "id") %>%
         unlist(., use.names = FALSE)
     topicVariables
@@ -79,7 +76,7 @@ createModelData = function(responseData, explainData){
     model.df =
         responseData %>%
         merge(., explainData, all = FALSE, by = "date") %>%
-        mutate(date = as.numeric(date))
+        subset(., select = -date)
     model.df
 }
 
