@@ -24,7 +24,8 @@ getTopicVariables = function(){
     topicVariables =
         dbGetQuery(con, "PRAGMA table_info(NoposTopicModel)") %>%
         subset(., select = name, subset = name != "id") %>%
-        unlist(., use.names = FALSE)
+        unlist(., use.names = FALSE) %>%
+        gsub(" ", "_", .)
     topicVariables
 }
 
@@ -93,4 +94,11 @@ mlrModelSelector = function(data, testPeriod, models){
     bestModelIndex = which.min(unlist(lapply(testPred, performance)))
     bestModel = models[bestModelIndex]
     bestModel
+}
+
+getSortedCoef = function(model){
+    coef = coef(model$learner.model, s = 0.01)
+    coef.df = data.frame(variable = rownames(coef), coef = 0)
+    coef.df[coef@i + 1, 'coef'] = coef@x
+    arrange(coef.df, coef)
 }
