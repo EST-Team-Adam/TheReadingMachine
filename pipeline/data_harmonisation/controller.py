@@ -3,6 +3,9 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 
+# NOTE (Michael): We will use the no pos table for now.
+topicModelTable = 'NoposTopicModel'
+
 
 def get_sentiment_scored_article():
     data_dir = os.environ['DATA_DIR']
@@ -18,7 +21,13 @@ def get_topic_modelled_article():
     engine = create_engine(
         'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
     topic_modelled_article = pd.read_sql(
-        'SELECT * FROM NoposTopicModel', engine)
+        'SELECT * FROM {}'.format(topicModelTable), engine)
+
+    # Rename the columns
+    new_names = {n: n.replace(' ', '_')
+                 for n in topic_modelled_article.columns}
+    topic_modelled_article.rename(columns=new_names, inplace=True)
+
     return topic_modelled_article
 
 
