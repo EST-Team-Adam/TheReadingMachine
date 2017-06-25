@@ -3,7 +3,6 @@ import json
 import sqlalchemy
 import controller as ctr
 from sqlalchemy import create_engine
-from twitter import TwitterHTTPError
 from oauth_setup import oauth_login
 
 

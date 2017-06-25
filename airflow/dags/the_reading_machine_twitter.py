@@ -33,17 +33,17 @@ dag = DAG('the_reading_machine',
 # Create nodes
 ########################################################################
 
-# Article scrapping
-# --------------------
-article_scraper_script_path = os.path.join(
-    process_directory, 'article_scraper/processor.py')
-article_scraper_command = 'python {}'.format(
-    article_scraper_command_path)
-article_scraper = BashOperator(bash_command=article_scraper_command,
-                               task_id='article_scraper',
+# Twitter scraping
+# -------------------
+twitter_scraper_script_path = os.path.join(
+    process_directory, 'twitter_scraper/processor.py')
+twitter_scraper_command = 'python {}'.format(
+    twitter_scraper_script_path)
+twitter_scraper = BashOperator(bash_command=twitter_scraper_command,
+                               task_id='twitter_scraper',
                                params=default_args,
                                dag=dag)
-db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
+db_raw_twitter = DummyOperator(task_id='db_raw_twitter', dag=dag)
 
 # Sentiment scoring
 # --------------------
@@ -124,12 +124,12 @@ db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
 # Create dependency
 ########################################################################
 
-db_raw_article.set_upstream(article_scraper)
+db_raw_twitter_article.set_upstream(twitter_scraper)
 
-sentiment_scoring.set_upstream(db_raw_article)
-topic_modelling.set_upstream(db_raw_article)
-geo_tagging.set_upstream(db_raw_article)
-commodity_tagging.set_upstream(db_raw_article)
+sentiment_scoring.set_upstream(db_raw_twitter_article)
+topic_modelling.set_upstream(db_raw_twitter_article)
+geo_tagging.set_upstream(db_raw_twitter_article)
+commodity_tagging.set_upstream(db_raw_twitter_article)
 
 db_sentiment_scoring.set_upstream(sentiment_scoring)
 db_topic_modelling.set_upstream(topic_modelling)
