@@ -1,5 +1,5 @@
 import pandas as pd
-import json
+import os
 import sqlalchemy
 import controller as ctr
 from sqlalchemy import create_engine
@@ -19,25 +19,15 @@ followers_list = pd.read_csv(twitter_file)['Screen Name'].tolist()
 # Autenticate API
 tt = oauth_login()
 
-# Geotag articles
+# Twitter articles
 twitter_output = ctr.get_timelines(
-    followers=followers_list, t =tt)
-
-# Output test
-output_file = data_dir + "twitter_timelines.jsonl"
-# all_tweets.apply(lambda x: json.dumps(dict(x)), 1).to_csv(output_file)
+    followers=followers_list, t=tt)
 
 # TODO: define output
 # Save output file
-field_type = {'id': sqlalchemy.types.Integer(),
-              'geo_tag': sqlalchemy.types.NVARCHAR(length=255)}
-flattened_article_df = pd.DataFrame(geotagged_articles)
+field_type = {'source': sqlalchemy.types.NVARCHAR(length=255),
+              'article': sqlalchemy.types.NVARCHAR(length=255)}
+flattened_article_df = pd.DataFrame(twitter_output)
 flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,
                             if_exists='replace',
                             dtype=field_type)
-
-
-
-
-
-
