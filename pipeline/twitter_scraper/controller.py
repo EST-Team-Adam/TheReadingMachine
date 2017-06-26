@@ -4,7 +4,7 @@ import sys
 from twitter import TwitterHTTPError
 
 
-def get_timeline(screen_name, t):
+def get_timeline(screen_name, t, verbose = F):
 
     all_tweets = []
     new_tweets = t.statuses.user_timeline(screen_name=screen_name, count=200)
@@ -18,13 +18,15 @@ def get_timeline(screen_name, t):
         # update the id of the oldest tweet less one
         oldest = all_tweets[-1]['id'] - 1
 
-        print "getting tweets before https://twitter.com/{0}/status/{1}".format(screen_name, oldest)
+        if verbose:
+            print "getting tweets before https://twitter.com/{0}/status/{1}".format(screen_name, oldest)
 
         # all subsequent requests use the max_id param to prevent duplicates
         new_tweets = t.statuses.user_timeline(
             screen_name=screen_name, count=200, max_id=oldest)
 
-        print "...{0} tweets downloaded so far [{1}]".format(len(all_tweets), screen_name)
+        if verbose: 
+            print "...{0} tweets downloaded so far [{1}]".format(len(all_tweets), screen_name)
 
     tweets = pd.DataFrame([{'link': 'https://twitter.com/' + screen_name,
                             'title': tweet['id'],
