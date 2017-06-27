@@ -21,7 +21,7 @@ class DuplicatesPipeline(object):
 
     def process_item(self, item, spider):
         if item['link'] in self.ids_seen:
-            spider.logf.write("Duplicate item found: %s\n" % item)
+            # spider.logf.write("Duplicate item found: %s\n" % item)
             raise DropItem("Duplicate item found: %s" % item)
         else:
             self.ids_seen.add(item['link'])
@@ -47,12 +47,12 @@ class SanitizeArticlePipeline(object):
                 '\n', '').replace('\t', ' ')
             item['article'] = sanitized_article.encode('ascii', 'ignore')
         if len(item['date']) == 0:
-            spider.logf.write("Empty Date in %s\n" % item)
+            # spider.logf.write("Empty Date in %s\n" % item)
             raise DropItem("Empty Date in %s" % item)
         elif len(item['article']) > 0:
             return item
         else:
-            spider.logf.write("Empty Article in %s\n" % item)
+            # spider.logf.write("Empty Article in %s\n" % item)
             raise DropItem("Empty Article in %s" % item)
 
 
