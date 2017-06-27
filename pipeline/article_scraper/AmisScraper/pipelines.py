@@ -11,8 +11,7 @@ from scrapy.exceptions import DropItem
 import threading
 import time
 
-
-DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'resources'))
+data_dir = os.environ['DATA_DIR']
 
 
 class DuplicatesPipeline(object):
@@ -30,8 +29,9 @@ class DuplicatesPipeline(object):
 
 
 class SanitizeArticlePipeline(object):
+
     def __init__(self):
-        stf = open(DATA_DIR+'/stop_words.txt', 'r')
+        stf = open(data_dir + '/stop_words.txt', 'r')
         stop_words = [line.strip() for line in stf]
         self.stop_words = set(stop_words)
 
@@ -41,8 +41,10 @@ class SanitizeArticlePipeline(object):
 
     def process_item(self, item, spider):
         if 'article' in dict(item):
-            sanitized_article = " ".join([x for x in item['article'] if self._check_stop_words(x)])
-            sanitized_article = sanitized_article.replace('\n', '').replace('\t', ' ')
+            sanitized_article = " ".join(
+                [x for x in item['article'] if self._check_stop_words(x)])
+            sanitized_article = sanitized_article.replace(
+                '\n', '').replace('\t', ' ')
             item['article'] = sanitized_article.encode('ascii', 'ignore')
         if len(item['date']) == 0:
             spider.logf.write("Empty Date in %s\n" % item)
@@ -56,7 +58,8 @@ class SanitizeArticlePipeline(object):
 
 class AmisJsonPipeline(object):
     lock = threading.Lock()
-    datafile = open('blog_articles_{0}.jsonl'.format(time.strftime("%d_%m_%Y")), 'a')
+    datafile = open(data_dir + '/blog_articles_{0}.jsonl'.format(
+        time.strftime("%d_%m_%Y")), 'a')
 
     def __init__(self):
         pass
