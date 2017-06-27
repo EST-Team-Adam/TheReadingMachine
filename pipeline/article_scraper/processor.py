@@ -1,5 +1,7 @@
 import pandas as pd
 import os
+import time
+from shutil import copy2
 import sqlalchemy
 from sqlalchemy import create_engine
 from scrapy.crawler import CrawlerProcess
@@ -7,8 +9,14 @@ from scrapy.utils.project import get_project_settings
 
 # Configuration
 data_dir = os.environ['DATA_DIR']
+cfg_dir = os.environ['SCRAPY_CONFIG_DIR']
+cfg_file = cfg_dir + '/scrapy.cfg'
+
 target_data_table = 'RawArticle'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+
+# Copy cfg file in the current directory
+copy2(cfg_file, os.getcwd())
 
 process = CrawlerProcess(get_project_settings())
 
