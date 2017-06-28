@@ -27,18 +27,18 @@ for spider in spiders:
 
 process.start()
 
-json_file = data_dir + 'blog_articles_{0}.jsonl'.format(
+json_file = data_dir + '/blog_articles_{0}.jsonl'.format(
     time.strftime("%d_%m_%Y"))
 if os.path.isfile(json_file):
-    flattened_article_df = pd.read_json(json_file)
+    flattened_article_df = pd.read_json(json_file, lines=True)
 
 # Save output file
-field_type = {'source': sqlalchemy.types.NVARCHAR(length=255),
-              'title': sqlalchemy.types.NVARCHAR(length=255),
+field_type = {'source': sqlalchemy.types.Unicode,
+              'title': sqlalchemy.types.Unicode,
               'date': sqlalchemy.types.NVARCHAR(length=255),
-              'link': sqlalchemy.types.NVARCHAR(length=255),
-              'article': sqlalchemy.types.NVARCHAR(length=255),
-              'source': sqlalchemy.types.NVARCHAR(length=255)
+              'link': sqlalchemy.types.Unicode,
+              'article': sqlalchemy.types.Unicode,
+              'source': sqlalchemy.types.Unicode
               }
 
 flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,
