@@ -35,8 +35,14 @@ dag = DAG('the_reading_machine',
 
 # Article scrapping
 # --------------------
-scraper = DummyOperator(task_id='scraper', dag=dag)
+article_scraper = DummyOperator(task_id='article_scraper', dag=dag)
 db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
+
+# Price Extraction
+# --------------------
+price_scraper = DummyOperator(task_id='price_scraper', dag=dag)
+db_raw_price = DummyOperator(task_id='db_raw_price', dag=dag)
+
 
 # Sentiment scoring
 # --------------------
@@ -117,7 +123,8 @@ db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
 # Create dependency
 ########################################################################
 
-db_raw_article.set_upstream(scraper)
+db_raw_article.set_upstream(article_scraper)
+db_raw_price.set_upstream(price_scraper)
 
 sentiment_scoring.set_upstream(db_raw_article)
 topic_modelling.set_upstream(db_raw_article)
@@ -136,6 +143,7 @@ data_harmonisation.set_upstream(db_commodity_tagging)
 
 db_data_harmonisation.set_upstream(data_harmonisation)
 
+price_model.set_upstream(db_raw_price)
 price_model.set_upstream(db_data_harmonisation)
 db_price_model.set_upstream(price_model)
 
