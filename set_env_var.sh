@@ -12,3 +12,6 @@ export AIRFLOW_WEBSERVER_PID=$HOME/airflow-webserver.pid
 # Set current dataset version
 export DATASET_PREFIX=amis_articles
 export DATASET_VERSION=27_11_2016
+
+# Set the start date of the model
+export MODEL_START_DATE=2012-01-01

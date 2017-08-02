@@ -38,9 +38,29 @@ dag = DAG('the_reading_machine',
 article_scraper = DummyOperator(task_id='article_scraper', dag=dag)
 db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
 
+# Article processing
+# --------------------
+article_processing_script_path = os.path.join(
+    process_directory, 'article_processing/processor.py')
+article_processing_command = 'python {}'.format(
+    article_processing_script_path)
+article_processing = BashOperator(bash_command=article_processing_command,
+                                  task_id='article_processing',
+                                  params=default_args,
+                                  dag=dag)
+db_processed_article = DummyOperator(task_id='db_processed_article', dag=dag)
+
+
 # Price Extraction
 # --------------------
-price_scraper = DummyOperator(task_id='price_scraper', dag=dag)
+price_scraper_script_path = os.path.join(
+    process_directory, 'price_extraction/processor.py')
+price_scraper_command = 'python {}'.format(
+    price_scraper_script_path)
+price_scraper = BashOperator(bash_command=price_scraper_command,
+                             task_id='price_extraction',
+                             params=default_args,
+                             dag=dag)
 db_raw_price = DummyOperator(task_id='db_raw_price', dag=dag)
 
 
@@ -126,10 +146,13 @@ db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
 db_raw_article.set_upstream(article_scraper)
 db_raw_price.set_upstream(price_scraper)
 
-sentiment_scoring.set_upstream(db_raw_article)
-topic_modelling.set_upstream(db_raw_article)
-geo_tagging.set_upstream(db_raw_article)
-commodity_tagging.set_upstream(db_raw_article)
+article_processing.set_upstream(db_raw_article)
+db_processed_article.set_upstream(article_processing)
+
+sentiment_scoring.set_upstream(db_processed_article)
+topic_modelling.set_upstream(db_processed_article)
+geo_tagging.set_upstream(db_processed_article)
+commodity_tagging.set_upstream(db_processed_article)
 
 db_sentiment_scoring.set_upstream(sentiment_scoring)
 db_topic_modelling.set_upstream(topic_modelling)
