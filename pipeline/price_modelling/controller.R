@@ -48,19 +48,27 @@ getPriceData = function(){
 
 
 
+## transformPriceData = function(priceData, forecastPeriod = 90, targetVariable){
+##     ## Smooth the data using stl
+##     decomposed = 
+##         priceData %>%
+##         subset(., select = c("date", targetVariable)) %>%
+##         with(., stl(ts(.[, 2], freq = 261), s.window = "periodic")) %>%
+##         `[[`(1) %>%
+##         data.frame
+##     response.df = data.frame(date = priceData$date,
+##                              response = 
+##                                  c(decomposed$trend[(forecastPeriod + 1):
+##                                                     (length(decomposed$trend))],
+##                                    rep(NA, forecastPeriod)))
+##     na.omit(response.df)
+## }
+
 transformPriceData = function(priceData, forecastPeriod = 90, targetVariable){
     ## Smooth the data using stl
-    decomposed = 
-        priceData %>%
-        subset(., select = c("date", targetVariable)) %>%
-        with(., stl(ts(.[, 2], freq = 261), s.window = "periodic")) %>%
-        `[[`(1) %>%
-        data.frame
-
     response.df = data.frame(date = priceData$date,
                              response = 
-                                 c(decomposed$trend[(forecastPeriod + 1):
-                                                    (length(decomposed$trend))],
+                                 c(priceData[(forecastPeriod + 1):NROW(priceData), targetVariable],
                                    rep(NA, forecastPeriod)))
     na.omit(response.df)
 }

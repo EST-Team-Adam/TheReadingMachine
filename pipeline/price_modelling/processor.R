@@ -48,7 +48,8 @@ priceData = getPriceData()
 transformedData = transformHarmonisedData(harmonisedData)
 aggregatedData = dailyAggregation(transformedData) %>%
     subset(., subset = date > firstStartDate)
-responseData = transformPriceData(priceData, forecastPeriod = forecastPeriod, targetVariable = target)
+responseData = transformPriceData(priceData, forecastPeriod = forecastPeriod,
+                                  targetVariable = target)
 
 
 for(i in topicVariables){
