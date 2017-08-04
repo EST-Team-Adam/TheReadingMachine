@@ -57,3 +57,36 @@ Most viewed articles:
 1 month
 1 year
 all time
+{
+}
+/* customize styles to your web-site */
+.mp_releases_box {
+ border: solid #999999 1px;
+ background-color: #FFFFFF;
+}
+#mp_releases {
+ font-family:Geneva, Arial, Helvetica, sans-serif;
+ padding-top: 0px;
+ position: relative;
+ vertical-align: bottom;
+}
+#mp_releases li {
+ margin-top: 3px;
+}
+#mp_releases a {
+ color: #0033CC;
+ font-size: 12px;
+ text-decoration: underline;
+}
+#mp_releases a:hover {
+ color: #CC0000;
+ font-size: 12px;
+}
+.ferthead {
+ font-size: 14px;
+ color: #000000;
+}
+.fertheadbox {
+ padding-left: 10px;
+ padding-top: 10px;
+}
