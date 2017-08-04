@@ -4,6 +4,7 @@ import pandas as pd
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import SnowballStemmer
+from nltk import pos_tag
 from datetime import datetime
 
 
@@ -26,7 +27,7 @@ irrelevant_link = ['https://www.euractiv.com/topics/news/?type_filter=video',
 # Initialise processing parameters
 model_start_date = datetime(2010, 1, 1).date()
 remove_captalisation = True
-remove_noun = True
+remove_noun = False
 remove_numerical = True
 stem = False
 
@@ -64,7 +65,7 @@ def scraper_post_processing(raw_articles):
     return processed_articles
 
 
-def text_processor(text, remove_captalisation=True, remove_noun=True,
+def text_processor(text, remove_captalisation=True, remove_noun=False,
                    remove_numerical=True, stem=False):
     '''The function process the texts with the intention for topic
     modelling.
@@ -103,6 +104,13 @@ def text_processor(text, remove_captalisation=True, remove_noun=True,
     if remove_numerical:
         tokenized_text = [word for word in tokenized_text
                           if not word.isdigit()]
+
+    # This step is extremely computational expensive. The benchmark
+    # shows it would increase the total time by 12 times.
+    if remove_noun:
+        noun_set = set(['NNP', 'NNPS'])
+        tokenized_text = [w for w, t in pos_tag(tokenized_text)
+                          if t not in noun_set]
 
     # Remove stopwords and manual exlusion set
     meaningless_words = ['euractiv', 'com',
@@ -144,7 +152,7 @@ def article_summariser(article_list):
 
 
 def text_preprocessing(article_df, article_col, min_length,
-                       remove_captalisation=True, remove_noun=True,
+                       remove_captalisation=True, remove_noun=False,
                        remove_numerical=True, stem=False):
     '''Process the text extracted from the scrapper.
 
