@@ -17,17 +17,21 @@ sql_query = 'SELECT * FROM {}'.format(source_data_table)
 # Reading data
 articles = pd.read_sql(sql_query, engine, parse_dates=['date'])
 
-# Process the articles.
-#
-# We first post process the result of the scraper by removeing
-# duplicates and several other data issues. Then we process the text
-# by tokenise and removal of unwanted symbols.
+# Post processing the data extraction
 processed_articles = ctr.scraper_post_processing(articles)
+
+# HACK (Michael): To test the model, I have taken only data from
+#                 'agrimoney' and 'euractive' as they go beyond
+#                 2010. This is required to learn the increase in
+#                 price.
+processed_articles = processed_articles[processed_articles['source'].isin(
+    ['agrimoney', 'euractiv'])]
+
 preprocessed_text, text_summary = ctr.text_preprocessing(article_df=processed_articles,
                                                          article_col='article',
                                                          min_length=min_length)
 
-
+# Save the data
 data_field_type = {'id': sqlalchemy.types.Integer(),
                    'date': sqlalchemy.types.Date(),
                    'article': sqlalchemy.types.Text(),
@@ -43,8 +47,6 @@ summary_field_type = {'createTime': sqlalchemy.types.DateTime(),
                       'vocab_size': sqlalchemy.types.Integer()
                       }
 
-
-# Save the data
 preprocessed_text.to_sql(con=engine,
                          name=target_data_table,
                          index=False,
