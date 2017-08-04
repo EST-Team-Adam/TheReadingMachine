@@ -3,10 +3,9 @@ import pandas as pd
 import controller as ctr
 import sqlalchemy
 from sqlalchemy import create_engine
-
+from datetime import datetime
 
 # Configuration
-min_length = 30
 data_dir = os.environ['DATA_DIR']
 source_data_table = 'RawArticle'
 target_data_table = 'ProcessedArticle'
@@ -14,11 +13,22 @@ summary_data_table = 'ProcessedArticleSummary'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 sql_query = 'SELECT * FROM {}'.format(source_data_table)
 
+# Initialise processing parameters
+model_start_date = datetime(2010, 1, 1).date()
+min_length = 30
+remove_captalisation = True
+remove_noun = True
+remove_numerical = True
+remove_punctuation = True
+stem = True
+
+
 # Reading data
 articles = pd.read_sql(sql_query, engine, parse_dates=['date'])
 
 # Post processing the data extraction
-processed_articles = ctr.scraper_post_processing(articles)
+processed_articles = ctr.scraper_post_processing(
+    articles, model_start_date=model_start_date)
 
 # HACK (Michael): To test the model, I have taken only data from
 #                 'agrimoney' and 'euractive' as they go beyond
@@ -27,9 +37,16 @@ processed_articles = ctr.scraper_post_processing(articles)
 processed_articles = processed_articles[processed_articles['source'].isin(
     ['agrimoney', 'euractiv'])]
 
-preprocessed_text, text_summary = ctr.text_preprocessing(article_df=processed_articles,
-                                                         article_col='article',
-                                                         min_length=min_length)
+# Process the texts
+preprocessed_text, text_summary = (
+    ctr.text_preprocessing(article_df=processed_articles,
+                           article_col='article',
+                           min_length=min_length,
+                           remove_captalisation=remove_captalisation,
+                           remove_noun=remove_noun,
+                           remove_numerical=remove_numerical,
+                           remove_punctuation=remove_punctuation,
+                           stem=stem))
 
 # Save the data
 data_field_type = {'id': sqlalchemy.types.Integer(),

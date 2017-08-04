@@ -1,6 +1,7 @@
 from __future__ import division
 import itertools
 import pandas as pd
+import string
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import SnowballStemmer
@@ -24,15 +25,7 @@ irrelevant_link = ['https://www.euractiv.com/topics/news/?type_filter=video',
                    'http://www.euractiv.com/news/']
 
 
-# Initialise processing parameters
-model_start_date = datetime(2010, 1, 1).date()
-remove_captalisation = True
-remove_noun = False
-remove_numerical = True
-stem = False
-
-
-def scraper_post_processing(raw_articles):
+def scraper_post_processing(raw_articles, model_start_date):
     '''Perform post processing of articles scrapped by the scrapper.
 
     There have been a few issues identified regarding the
@@ -66,7 +59,8 @@ def scraper_post_processing(raw_articles):
 
 
 def text_processor(text, remove_captalisation=True, remove_noun=False,
-                   remove_numerical=True, stem=False):
+                   remove_numerical=True, remove_punctuation=True,
+                   stem=False, tokenizer=None):
     '''The function process the texts with the intention for topic
     modelling.
 
@@ -88,8 +82,15 @@ def text_processor(text, remove_captalisation=True, remove_noun=False,
     '''
 
     # Tokenize
-    tokenizer = RegexpTokenizer(r'\w+')
-    tokenized_text = tokenizer.tokenize(text)
+    if tokenizer is None:
+        tokenizer = RegexpTokenizer(r'\w+')
+        tokenized_text = tokenizer.tokenize(text)
+    else:
+        tokenized_text = tokenizer(text)
+
+    if remove_punctuation:
+        punct = string.punctuation
+        tokenized_text = [t for t in tokenized_text if t not in punct]
 
     # This step is extremely computational expensive. The benchmark
     # shows it would increase the total time by 12 times.
@@ -152,7 +153,8 @@ def article_summariser(article_list):
 
 def text_preprocessing(article_df, article_col, min_length,
                        remove_captalisation=True, remove_noun=False,
-                       remove_numerical=True, stem=False):
+                       remove_numerical=True, remove_punctuation=True,
+                       stem=False):
     '''Process the text extracted from the scrapper.
 
     In addition, articles with tokens less than the min_length
@@ -167,6 +169,7 @@ def text_preprocessing(article_df, article_col, min_length,
                                      remove_captalisation=remove_captalisation,
                                      remove_noun=remove_noun,
                                      remove_numerical=remove_numerical,
+                                     remove_punctuation=remove_punctuation,
                                      stem=stem)
                       for a in article_df[article_col]]
 
