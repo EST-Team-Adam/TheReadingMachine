@@ -91,6 +91,12 @@ def text_processor(text, remove_captalisation=True, remove_noun=False,
     tokenizer = RegexpTokenizer(r'\w+')
     tokenized_text = tokenizer.tokenize(text)
 
+    # This step is extremely computational expensive. The benchmark
+    # shows it would increase the total time by 12 times.
+    if remove_noun:
+        noun_set = set(['NNP', 'NNPS'])
+        tokenized_text = [w for w, t in pos_tag(tokenized_text)
+                          if t not in noun_set]
     # Stemming
     if stem:
         stemmer = SnowballStemmer('english')
@@ -104,13 +110,6 @@ def text_processor(text, remove_captalisation=True, remove_noun=False,
     if remove_numerical:
         tokenized_text = [word for word in tokenized_text
                           if not word.isdigit()]
-
-    # This step is extremely computational expensive. The benchmark
-    # shows it would increase the total time by 12 times.
-    if remove_noun:
-        noun_set = set(['NNP', 'NNPS'])
-        tokenized_text = [w for w, t in pos_tag(tokenized_text)
-                          if t not in noun_set]
 
     # Remove stopwords and manual exlusion set
     meaningless_words = ['euractiv', 'com',
