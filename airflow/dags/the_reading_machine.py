@@ -35,14 +35,7 @@ dag = DAG('the_reading_machine',
 
 # Article scrapping
 # --------------------
-article_scraper_script_path = os.path.join(
-    process_directory, 'article_scraper/processor.py')
-article_scraper_command = 'python {}'.format(
-    article_scraper_script_path)
-article_scraper = BashOperator(bash_command=article_scraper_command,
-                               task_id='article_scraper',
-                               params=default_args,
-                               dag=dag)
+scraper = DummyOperator(task_id='scraper', dag=dag)
 db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
 
 # Sentiment scoring
@@ -124,7 +117,7 @@ db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
 # Create dependency
 ########################################################################
 
-db_raw_article.set_upstream(article_scraper)
+db_raw_article.set_upstream(scraper)
 
 sentiment_scoring.set_upstream(db_raw_article)
 topic_modelling.set_upstream(db_raw_article)
