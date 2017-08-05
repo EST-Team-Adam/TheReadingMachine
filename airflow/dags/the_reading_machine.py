@@ -35,7 +35,14 @@ dag = DAG('the_reading_machine',
 
 # Article scrapping
 # --------------------
-article_scraper = DummyOperator(task_id='article_scraper', dag=dag)
+article_scraper_script_path = os.path.join(
+    process_directory, 'article_scraper/processor.py')
+article_scraper_command = 'python {}'.format(
+    article_scraper_script_path)
+article_scraper = BashOperator(bash_command=article_scraper_command,
+                               task_id='article_scraper',
+                               params=default_args,
+                               dag=dag)
 db_raw_article = DummyOperator(task_id='db_raw_article', dag=dag)
 
 # Article processing
