@@ -41,12 +41,11 @@ if os.path.isfile(json_file):
     flattened_article_df = pd.read_json(json_file, lines=True)
 
 # Save output file
-field_type = {'source': sqlalchemy.types.Unicode,
-              'title': sqlalchemy.types.Unicode,
+field_type = {'source': sqlalchemy.types.Unicode(length=255),
+              'title': sqlalchemy.types.Unicode(length=255),
               'date': sqlalchemy.types.NVARCHAR(length=255),
-              'link': sqlalchemy.types.Unicode,
-              'article': sqlalchemy.types.Unicode,
-              'source': sqlalchemy.types.Unicode
+              'link': sqlalchemy.types.Unicode(length=255),
+              'article': sqlalchemy.types.UnicodeText
               }
 
 flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,

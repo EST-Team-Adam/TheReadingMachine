@@ -27,7 +27,7 @@ twitter_output = ctr.get_timelines(
 'article', 'date', 'link', 'title', 'source'
 # Save output file
 field_type = {'article': sqlalchemy.types.NVARCHAR(length=255),
-              'date': sqlaclchemy.types.NVARCHAR(lenght=255),
+              'date': sqlalchemy.types.NVARCHAR(lenght=255),
               'link': sqlaclchemy.types.NVARCHAR(lenght=255),
               'title': sqlaclchemy.types.NVARCHAR(lenght=255),
               'source': sqlalchemy.types.NVARCHAR(length=255)}

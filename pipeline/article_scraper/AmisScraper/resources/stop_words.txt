@@ -35,22 +35,23 @@ But hit the donate button before you go.
 Agrimoney.com and Agrimoney are trademarks of Agrimoney Ltd
 Agrimoney is part of the Briefing Media group
 Agrimoney Ltd is registered in England  & Wales.  Registered number: 09239069
-PRINTABLE VERSION
-SUBSCRIBE
-RSS FEEDS
+ PRINTABLE VERSION
+ SUBSCRIBE
+ RSS FEEDS
 LINKS
-EMAIL TO A FRIEND
+ EMAIL TO A FRIEND
 Link to Online Media Awards
 Agricultural Commodities
 Agricultural Markets
 Agricultural Companies
 Agricultural Events
-/* customize styles to your web-site */\r\n.mp_releases_box {\r\n\tborder: solid #999999 1px;\r\n\tbackground-color: #FFFFFF;\r\n}\r\n#mp_releases {\r\n\tfont-family:Geneva, Arial, Helvetica, sans-serif;\r\n\tpadding-top: 0px;\r\n\tposition: relative;\r\n\tvertical-align: bottom;\r\n}\r\n#mp_releases li {\r\n\tmargin-top: 3px;\r\n}\r\n#mp_releases a {\r\n\tcolor: #0033CC;\r\n\tfont-size: 12px;\r\n\ttext-decoration: underline;\r\n}\r\n#mp_releases a:hover {\r\n\tcolor: #CC0000;\r\n\tfont-size: 12px;\r\n}\r\n.ferthead {\r\n\tfont-size: 14px;\r\n\tcolor: #000000;\r\n}\r\n.fertheadbox {\r\n\tpadding-left: 10px;\r\n\tpadding-top: 10px;\r\n}
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-0'); });
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-1'); });
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-2'); });
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-3'); });
-googletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-4'); });
+ > World Grain News
+\r\ngoogletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-0'); });\r\n
+\r\ngoogletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-1'); });\r\n
+\r\ngoogletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-2'); });\r\n
+\r\ngoogletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-3'); });\r\n
+\r\ngoogletag.cmd.push(function() { googletag.display('div-gpt-ad-1432810667669-4'); });\r\n
+\r\n/* customize styles to your web-site */\r\n.mp_releases_box {\r\n\tborder: solid #999999 1px;\r\n\tbackground-color: #FFFFFF;\r\n}\r\n#mp_releases {\r\n\tfont-family:Geneva, Arial, Helvetica, sans-serif;\r\n\tpadding-top: 0px;\r\n\tposition: relative;\r\n\tvertical-align: bottom;\r\n}\r\n#mp_releases li {\r\n\tmargin-top: 3px;\r\n}\r\n#mp_releases a {\r\n\tcolor: #0033CC;\r\n\tfont-size: 12px;\r\n\ttext-decoration: underline;\r\n}\r\n#mp_releases a:hover {\r\n\tcolor: #CC0000;\r\n\tfont-size: 12px;\r\n}\r\n.ferthead {\r\n\tfont-size: 14px;\r\n\tcolor: #000000;\r\n}\r\n.fertheadbox {\r\n\tpadding-left: 10px;\r\n\tpadding-top: 10px;\r\n}\r\n
 Search Agrimoney.com:
 Most viewed articles:
 1 week
@@ -59,34 +60,6 @@ Most viewed articles:
 all time
 {
 }
-/* customize styles to your web-site */
-.mp_releases_box {
- border: solid #999999 1px;
- background-color: #FFFFFF;
-}
-#mp_releases {
- font-family:Geneva, Arial, Helvetica, sans-serif;
- padding-top: 0px;
- position: relative;
- vertical-align: bottom;
-}
-#mp_releases li {
- margin-top: 3px;
-}
-#mp_releases a {
- color: #0033CC;
- font-size: 12px;
- text-decoration: underline;
-}
-#mp_releases a:hover {
- color: #CC0000;
- font-size: 12px;
-}
-.ferthead {
- font-size: 14px;
- color: #000000;
-}
-.fertheadbox {
- padding-left: 10px;
- padding-top: 10px;
-}
+Search for similar articles by keyword: [
+]
+ | 
