@@ -8,9 +8,16 @@ source("controller.R")
 ########################################################################
 ## Initialisation
 ########################################################################
-firstStartDate = as.Date("2011-01-01")
+
+## HACK (Michael): This first date is due to the fact that sentiment
+##                 score were vastly different prior and after
+##                 2013. Prior to 2013, the sentiment has mean clsoe
+##                 to 0, while after 2013, the mean of sentiments has
+##                 risen to approximately 0.25.
+firstStartDate = as.Date("2013-01-01")
 endDate = as.Date("2016-04-18")
 target = "IGC.GOI"
+forecastPeriod = 90
 
 ########################################################################
 ## Read the data
@@ -39,14 +46,23 @@ priceData = getPriceData()
 ########################################################################
 
 transformedData = transformHarmonisedData(harmonisedData)
-aggregatedData = dailyAggregation(transformedData)
-responseData = transformPriceData(priceData, forecastPeriod = 180, targetVariable = target)
+aggregatedData = dailyAggregation(transformedData) %>%
+    subset(., subset = date > firstStartDate)
+responseData = transformPriceData(priceData, forecastPeriod = forecastPeriod,
+                                  targetVariable = target)
+
+
+for(i in topicVariables){
+    aggregatedData[i] = cumsum(scale(aggregatedData[i]))
+}
+
 
 ########################################################################
 ## Create the final model data
 ########################################################################
 
-complete.df = createModelData(responseData = responseData, explainData = aggregatedData)
+complete.df =
+    createModelData(responseData = responseData, explainData = aggregatedData)
 
 
 
@@ -60,6 +76,8 @@ bestModelName = mlrModelSelector(data = complete.df,
                                  models =  c("regr.lm", "regr.glmnet", "regr.cvglmnet"))
 
 
+## bestModelName = "regr.glmnet"
+
 ########################################################################
 ## Prediction
 ########################################################################
@@ -72,14 +90,22 @@ bestModel = train(bestLearner, task = task)
 
 prediction.df = 
     aggregatedData %>%
-    mutate(date = as.numeric(date)) %>%
+    subset(., select = -date) %>%
+    ## subset(., select = grep("wheat", colnames(.), value = TRUE)) %>%
+    ## mutate(date = as.numeric(date)) %>%
     predict(bestModel, newdata = .) %>%
     `$`(data) %>%
-    data.frame(date = aggregatedData$date, prediction = .) %>%
+    cbind(date = aggregatedData$date, .) %>%
+    mutate(date = date + forecastPeriod) %>%
+    mutate(prediction = lowess(date, response, f = 90/length(response))$y) %>%
+    subset(., select = -response) %>%
+    ## mutate(smootehdPrediction = lowess(date, prediction, f = 90/length(prediction))$y) %>%
     merge(., priceData, all.y = TRUE, by = "date") %>%
-    rename(prediction = response) %>%
+    ## rename(prediction = response) %>%
     melt(., id.var = "date")
-
 
 ggplot(data = prediction.df, aes(x = date, y = value, col = variable)) +
     geom_line()
+
+getSortedCoef(bestModel)
+

@@ -11,13 +11,10 @@ getHarmonisedData = function(){
 
 
 transformHarmonisedData = function(harmonisedData){
-
     ## Transformation
     transformedData = 
         harmonisedData %>%
-        mutate(date = as.Date(date, "%Y-%m-%d")) %>%
-        ## Drop the use onlyt the compound sentiment for now
-        subset(., select=-c(positive_sentiment, neutral_sentiment, negative_sentiment))
+        mutate(date = as.Date(date, "%Y-%m-%d"))
     colnames(transformedData) = gsub("[[:space:]]", "_", colnames(transformedData))
     transformedData
 }
@@ -25,9 +22,10 @@ transformHarmonisedData = function(harmonisedData){
 getTopicVariables = function(){
     ## Set topic variable columns
     topicVariables =
-        dbGetQuery(con, "PRAGMA table_info(TopicModel)") %>%
+        dbGetQuery(con, "PRAGMA table_info(NoposTopicModel)") %>%
         subset(., select = name, subset = name != "id") %>%
-        unlist(., use.names = FALSE)
+        unlist(., use.names = FALSE) %>%
+        gsub(" ", "_", .)
     topicVariables
 }
 
@@ -50,19 +48,27 @@ getPriceData = function(){
 
 
 
+## transformPriceData = function(priceData, forecastPeriod = 90, targetVariable){
+##     ## Smooth the data using stl
+##     decomposed = 
+##         priceData %>%
+##         subset(., select = c("date", targetVariable)) %>%
+##         with(., stl(ts(.[, 2], freq = 261), s.window = "periodic")) %>%
+##         `[[`(1) %>%
+##         data.frame
+##     response.df = data.frame(date = priceData$date,
+##                              response = 
+##                                  c(decomposed$trend[(forecastPeriod + 1):
+##                                                     (length(decomposed$trend))],
+##                                    rep(NA, forecastPeriod)))
+##     na.omit(response.df)
+## }
+
 transformPriceData = function(priceData, forecastPeriod = 90, targetVariable){
     ## Smooth the data using stl
-    decomposed = 
-        priceData %>%
-        subset(., select = c("date", targetVariable)) %>%
-        with(., stl(ts(.[, 2], freq = 261), s.window = "periodic")) %>%
-        `[[`(1) %>%
-        data.frame
-
     response.df = data.frame(date = priceData$date,
                              response = 
-                                 c(decomposed$trend[(forecastPeriod + 1):
-                                                    (length(decomposed$trend))],
+                                 c(priceData[(forecastPeriod + 1):NROW(priceData), targetVariable],
                                    rep(NA, forecastPeriod)))
     na.omit(response.df)
 }
@@ -79,7 +85,7 @@ createModelData = function(responseData, explainData){
     model.df =
         responseData %>%
         merge(., explainData, all = FALSE, by = "date") %>%
-        mutate(date = as.numeric(date))
+        subset(., select = -date)
     model.df
 }
 
@@ -96,4 +102,11 @@ mlrModelSelector = function(data, testPeriod, models){
     bestModelIndex = which.min(unlist(lapply(testPred, performance)))
     bestModel = models[bestModelIndex]
     bestModel
+}
+
+getSortedCoef = function(model){
+    coef = coef(model$learner.model, s = 0.01)
+    coef.df = data.frame(variable = rownames(coef), coef = 0)
+    coef.df[coef@i + 1, 'coef'] = coef@x
+    arrange(coef.df, coef)
 }
