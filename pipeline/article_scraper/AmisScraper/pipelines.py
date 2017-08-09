@@ -74,8 +74,8 @@ class AmisJsonPipeline(object):
         pass
 
     def open_spider(self, spider):
-        self.datafile = open(data_dir + '/blog_articles_{0}.jsonl'.format(
-            time.strftime("%d_%m_%Y")), 'a')
+        self.datafile = open(data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
+            time.strftime("%d_%m_%Y"), spider.name), 'a')
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):

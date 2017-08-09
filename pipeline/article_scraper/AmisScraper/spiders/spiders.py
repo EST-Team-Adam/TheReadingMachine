@@ -48,7 +48,10 @@ class BloombergSpider(CrawlSpider):
 
     def parse_item(self, response):
         item = NewsArticleItem()
-        title = response.xpath('//title/text()')[0].extract()
+        title = response.xpath('//title/text()').extract_first()
+        if title == 'Bloomberg':
+            title = response.xpath('//meta[@property="og:title"]/text()').extract_first()
+
         article = response.xpath('//p/text()').extract()
         self.logger.info("Scraping Title: " + title)
         try:
