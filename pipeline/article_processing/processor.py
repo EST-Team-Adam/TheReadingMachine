@@ -17,10 +17,10 @@ sql_query = 'SELECT * FROM {}'.format(source_data_table)
 model_start_date = datetime(2010, 1, 1).date()
 min_length = 30
 remove_captalisation = True
-remove_noun = True
+remove_noun = False
 remove_numerical = True
 remove_punctuation = True
-stem = True
+stem = False
 
 
 # Reading data
