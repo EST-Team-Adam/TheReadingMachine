@@ -28,7 +28,8 @@ os.makedirs(log_dir)
 
 process = CrawlerProcess(get_project_settings())
 
-spiders = ['bloomberg', 'noggers', 'worldgrain', 'euractiv', 'agrimoney']
+# 'bloomberg' removed temporarily.
+spiders = [ 'noggers', 'worldgrain', 'euractiv', 'agrimoney']
 
 for spider in spiders:
     process.crawl(spider)
@@ -36,11 +37,10 @@ for spider in spiders:
 process.start()
 
 flattened_article_df = pd.DataFrame()
-for spider in spiders:
-  json_file = data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
-    time.strftime("%d_%m_%Y"), spider)
-  if os.path.isfile(json_file):
-    flattened_article_df = flattened_article_df.append(pd.read_json(json_file, lines=True), ignore_index=True)
+json_file = data_dir + '/blog_articles_{0}.jsonl'.format(time.strftime("%d_%m_%Y"))
+if os.path.isfile(json_file):
+  flattened_article_df = flattened_article_df.append(pd.read_json(json_file, lines=True), ignore_index=True)
+
 
 # Save output file
 field_type = {'source': sqlalchemy.types.Unicode(length=255),

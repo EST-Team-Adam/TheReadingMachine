@@ -34,27 +34,20 @@ class SanitizeArticlePipeline(object):
         stop_words = [line.strip() for line in stf]
         self.stop_words = set(stop_words)
 
-
-    def open_spider(self, spider):
-        self.datafile = open(data_dir + '/articles_raw.txt', 'a')
-        self.lock = threading.Lock()
-    def close_spider(self, spider):
-        self.datafile.close()
-
-
     def _check_stop_words(self, word):
         word = word.strip()
         return len(word) > 2 and word not in self.stop_words
 
+    def _sanitize_article(self, article):
+        return(article.replace('\r', ' ').replace('\n', ' ')\
+            .replace('\\r', ' ').replace('\\n', ' ')\
+            .replace('\t', ' ').replace('\\"','').replace('"',''))
+
     def process_item(self, item, spider):
         if 'article' in dict(item):
-            self.lock.acquire()
-            self.datafile.write(json.dumps(item['article'])+"\n")
-            self.lock.release()
             sanitized_article = " ".join(
                     [x for x in item['article'] if self._check_stop_words(x)])
-            sanitized_article = sanitized_article.replace('\n', ' ')\
-            .replace('\t', ' ')
+            sanitized_article = self._sanitize_article(sanitized_article)
             try:
                 sanitized_article = sanitized_article.encode('utf-8', 'ignore')
             except UnicodeDecodeError:
@@ -74,8 +67,8 @@ class AmisJsonPipeline(object):
         pass
 
     def open_spider(self, spider):
-        self.datafile = open(data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
-            time.strftime("%d_%m_%Y"), spider.name), 'a')
+        self.datafile = open(data_dir + '/blog_articles_{0}.jsonl'.format(
+            time.strftime("%d_%m_%Y")), 'a', 0)
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):
