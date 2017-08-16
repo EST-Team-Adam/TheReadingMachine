@@ -30,40 +30,24 @@ fullDbPath = paste0(dataDir, dbName)
 con = dbConnect(drv=SQLite(), dbname=fullDbPath)
 
 
-harmonisedData =
+topicVariables = getTopicVariables()
+priceData = getPriceData()
+complete.df =
     getHarmonisedData() %>%
     ## HACK (Michael): This is temporary as there is some problem with
     ##                 commodity tagging. All the commodity are not
     ##                 tagged and thus they are identical
     ##                 variables. This results in unreliable
     ##                 prediction.
-    subset(., select = -c(grep("contain", colnames(.))))
-topicVariables = getTopicVariables()
-priceData = getPriceData()
+    subset(., select = -c(grep("contain", colnames(.)))) %>%
+    mutate(date = as.Date(date, "%Y-%m-%d")) %>%
+    rename(response = SGOI)
 
-########################################################################
-## Transform the data for modelling
-########################################################################
-
-transformedData = transformHarmonisedData(harmonisedData)
-aggregatedData = dailyAggregation(transformedData) %>%
-    subset(., subset = date > firstStartDate)
-responseData = transformPriceData(priceData, forecastPeriod = forecastPeriod,
-                                  targetVariable = target)
 
 
 for(i in topicVariables){
-    aggregatedData[i] = cumsum(scale(aggregatedData[i]))
+    complete.df[i] = cumsum(scale(aggregatedData[i]))
 }
-
-
-########################################################################
-## Create the final model data
-########################################################################
-
-complete.df =
-    createModelData(responseData = responseData, explainData = aggregatedData)
-
 
 
 ########################################################################
@@ -71,12 +55,12 @@ complete.df =
 ########################################################################
 
 
-bestModelName = mlrModelSelector(data = complete.df,
-                                 testPeriod = 180,
-                                 models =  c("regr.lm", "regr.glmnet", "regr.cvglmnet"))
-
-
-## bestModelName = "regr.glmnet"
+bestModelName =
+    complete.df %>%
+    select(., -date) %>%
+    mlrModelSelector(data = .,
+                     testPeriod = 180,
+                     models =  c("regr.lm", "regr.glmnet", "regr.cvglmnet"))
 
 ########################################################################
 ## Prediction
@@ -84,24 +68,22 @@ bestModelName = mlrModelSelector(data = complete.df,
 
 ## Re-fit full data with best model
 bestLearner = makeLearner(bestModelName)
-task = makeRegrTask(data = complete.df, id = "prediction", target = "response")
+task = complete.df %>%
+    select(., -date) %>%
+    makeRegrTask(data = , id = "prediction", target = "response")
 bestModel = train(bestLearner, task = task)
 
 
 prediction.df = 
-    aggregatedData %>%
+    complete.df %>%
     subset(., select = -date) %>%
-    ## subset(., select = grep("wheat", colnames(.), value = TRUE)) %>%
-    ## mutate(date = as.numeric(date)) %>%
     predict(bestModel, newdata = .) %>%
     `$`(data) %>%
-    cbind(date = aggregatedData$date, .) %>%
+    cbind(date = complete.df$date, .) %>%
     mutate(date = date + forecastPeriod) %>%
     mutate(prediction = lowess(date, response, f = 90/length(response))$y) %>%
-    subset(., select = -response) %>%
-    ## mutate(smootehdPrediction = lowess(date, prediction, f = 90/length(prediction))$y) %>%
-    merge(., priceData, all.y = TRUE, by = "date") %>%
-    ## rename(prediction = response) %>%
+    subset(., select = -c(response, truth)) %>%
+    merge(., priceData, all = TRUE, by = "date") %>%
     melt(., id.var = "date")
 
 ggplot(data = prediction.df, aes(x = date, y = value, col = variable)) +

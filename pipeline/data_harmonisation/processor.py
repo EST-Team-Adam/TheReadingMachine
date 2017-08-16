@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 
 # Configuration
 data_dir = os.environ['DATA_DIR']
-source_data_table = ['TopicModel', 'CommodityTaggedArticle']
 target_data_table = 'HarmonisedData'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 
