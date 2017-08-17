@@ -37,10 +37,11 @@ for spider in spiders:
 process.start()
 
 flattened_article_df = pd.DataFrame()
-json_file = data_dir + '/blog_articles_{0}.jsonl'.format(time.strftime("%d_%m_%Y"))
-if os.path.isfile(json_file):
-  flattened_article_df = flattened_article_df.append(pd.read_json(json_file, lines=True), ignore_index=True)
-
+for spider in spiders:
+  json_file = data_dir + '/blog_articles_{0}_{1}.jsonl'.format(time.strftime("%d_%m_%Y"), spider)
+  if os.path.isfile(json_file):
+      flattened_article_df = flattened_article_df.append(pd.read_json(json_file, lines=True), ignore_index=True)
+flattened_article_df.date = flattened_article_df.date.apply(lambda d: datetime.strptime(str(d), '%Y-%m-%d %H:%M:%S'))
 
 # Save output file
 field_type = {'source': sqlalchemy.types.Unicode(length=255),

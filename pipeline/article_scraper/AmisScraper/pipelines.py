@@ -64,11 +64,13 @@ class SanitizeArticlePipeline(object):
 class AmisJsonPipeline(object):
 
     def __init__(self):
-        pass
+        #pass
+        self.datafiles = {}
 
     def open_spider(self, spider):
-        self.datafile = open(data_dir + '/blog_articles_{0}.jsonl'.format(
-            time.strftime("%d_%m_%Y")), 'a', 0)
+        if spider.name not in self.datafiles.keys():
+            self.datafiles[spider.name] = open(data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
+                time.strftime("%d_%m_%Y"), spider.name), 'a')#, 0)
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):
@@ -77,11 +79,14 @@ class AmisJsonPipeline(object):
             item_dict = dict(item)
             item_dict['source'] = spider.name
             line = json.dumps(item_dict, ensure_ascii=False) + "\n"
-            self.datafile.write(line)
+            #self.datafile.write(line)
+            self.datafiles[spider.name].write(line)
         except (UnicodeDecodeError, UnicodeEncodeError):
             pass
         self.lock.release()
         return item
 
     def close_spider(self, spider):
-        self.datafile.close()
+        #self.datafile.close()
+        for datafile in self.datafiles.values():
+            datafile.close()
