@@ -62,7 +62,7 @@ con = dbConnect(drv=SQLite(), dbname=fullDbPath)
 statement = paste0('SELECT * FROM RawArticle')
 rawArticles =
     dbGetQuery(con, statement) %>%
-    mutate(date = as.Date(date, format="%Y-%m-%d"))
+    mutate(date = as.Date(date, format="%Y-%m-%d  %H:%M:%S"))
 ```
 
 There are a few observations we can make in the following graph. First
