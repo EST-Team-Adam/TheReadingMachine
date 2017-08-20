@@ -72,7 +72,8 @@ class NoggersBlogSpider(CrawlSpider):
                         "nogger-noggersblog.blogspot.ch",
                         "nogger-noggersblog.blogspot.com"]
     start_urls = ["http://nogger-noggersblog.blogspot.it/",
-                    "http://nogger-noggersblog.blogspot.com/"]
+                    "http://nogger-noggersblog.blogspot.com/",
+                    "http://nogger-noggersblog.blogspot.ch/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
              callback="parse_item", follow=True)
