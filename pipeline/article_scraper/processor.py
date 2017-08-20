@@ -47,7 +47,7 @@ flattened_article_df.date = flattened_article_df.date.apply(lambda d: datetime.s
 # Save output file
 field_type = {'source': sqlalchemy.types.Unicode(length=255),
               'title': sqlalchemy.types.Unicode(length=255),
-              'date': sqlalchemy.types.NVARCHAR(length=255),
+              'date': sqlalchemy.types.Date,
               'link': sqlalchemy.types.Unicode(length=255),
               'article': sqlalchemy.types.UnicodeText
               }

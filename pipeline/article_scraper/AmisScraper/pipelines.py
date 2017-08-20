@@ -44,6 +44,7 @@ class SanitizeArticlePipeline(object):
             .replace('\t', ' ').replace('\\"','').replace('"',''))
 
     def process_item(self, item, spider):
+        item['title'] = item['title'].encode('utf-8', 'ignore')
         if 'article' in dict(item):
             sanitized_article = " ".join(
                     [x for x in item['article'] if self._check_stop_words(x)])
@@ -64,7 +65,6 @@ class SanitizeArticlePipeline(object):
 class AmisJsonPipeline(object):
 
     def __init__(self):
-        #pass
         self.datafiles = {}
 
     def open_spider(self, spider):
@@ -74,19 +74,19 @@ class AmisJsonPipeline(object):
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):
+        spider.logger.info("Processing Item: " + item['title'])
         self.lock.acquire()
         try:
             item_dict = dict(item)
             item_dict['source'] = spider.name
             line = json.dumps(item_dict, ensure_ascii=False) + "\n"
-            #self.datafile.write(line)
             self.datafiles[spider.name].write(line)
+            spider.logger.info("Written Item: " + item['title'])
         except (UnicodeDecodeError, UnicodeEncodeError):
-            pass
+            raise DropItem("Formatting Error in %s" % item)
         self.lock.release()
         return item
 
     def close_spider(self, spider):
-        #self.datafile.close()
         for datafile in self.datafiles.values():
             datafile.close()

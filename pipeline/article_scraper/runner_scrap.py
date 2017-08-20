@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+from datetime import datetime
 import time
 import shutil
 import sqlalchemy
@@ -10,20 +11,20 @@ from scrapy.utils.project import get_project_settings
 # Configuration
 os.environ['DATA_DIR'] = '/Users/luca_pozzi/Documents/GitHub/TheReadingMachine/data'
 os.environ['SCRAPY_CONFIG_DIR'] = '~/Documents/GitHub/TheReadingMachine/pipeline/article_scraper'
-spider = 'bloomberg'
-#spider = 'worldgrain'
 
 data_dir = os.environ['DATA_DIR']
 cfg_dir = os.environ['SCRAPY_CONFIG_DIR']
 cfg_file = cfg_dir + '/scrapy.cfg'
 local_directory = os.getcwd()
 
+target_data_table = 'RawArticle'
+engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+
+
 process = CrawlerProcess(get_project_settings())
-process.crawl(spider)
 
-#process.start()
 
-spiders = [ 'noggers', 'worldgrain', 'euractiv', 'agrimoney']
+spiders = ['euractiv', 'noggers', 'worldgrain', 'agrimoney']
 
 for spider in spiders:
     process.crawl(spider)
@@ -42,7 +43,7 @@ flattened_article_df.date = flattened_article_df.date.apply(lambda d: datetime.s
 # Save output file
 field_type = {'source': sqlalchemy.types.Unicode(length=255),
               'title': sqlalchemy.types.Unicode(length=255),
-              'date': sqlalchemy.types.NVARCHAR(length=255),
+              'date': sqlalchemy.types.Date,
               'link': sqlalchemy.types.Unicode(length=255),
               'article': sqlalchemy.types.UnicodeText
               }
