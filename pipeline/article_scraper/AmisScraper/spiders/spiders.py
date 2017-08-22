@@ -7,7 +7,6 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 
 
-
 class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
     """
     Need this to fix the encoding error.
@@ -68,12 +67,8 @@ class BloombergSpider(CrawlSpider):
 
 class NoggersBlogSpider(CrawlSpider):
     name = "noggers"
-    allowed_domains = ["nogger-noggersblog.blogspot.it",
-                        "nogger-noggersblog.blogspot.ch",
-                        "nogger-noggersblog.blogspot.com"]
-    start_urls = ["http://nogger-noggersblog.blogspot.it/",
-                    "http://nogger-noggersblog.blogspot.com/",
-                    "http://nogger-noggersblog.blogspot.ch/"]
+    allowed_domains = ["nogger-noggersblog.blogspot.com"]
+    start_urls = ["http://nogger-noggersblog.blogspot.com/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
              callback="parse_item", follow=True)
@@ -91,7 +86,7 @@ class NoggersBlogSpider(CrawlSpider):
             token = filter(lambda x: '--' in x, article)
             try:
                 raw_date = token[0].split(' -- ')[0].replace('\n', '')
-                date = datetime.strptime(raw_date, '%d/%M/%y')
+                date = datetime.strptime(raw_date, '%d/%m/%y')
             except (ValueError, IndexError):
                 try:
                     raw_date = title.split("Nogger's Blog: ")[1]
@@ -181,6 +176,7 @@ class EuractivSpider(CrawlSpider):
             item['link'] = response.url.replace('http://', '').replace('https://', '')
         except UnicodeDecodeError:
                 pass
+        
         self.logger.info("Scraping Title: " + title)
         
         try:
@@ -205,15 +201,18 @@ class AgriMoneySpider(CrawlSpider):
     ] + ["http://www.agrimoney.com/search/{0}/".format(i) for i in range(600)] + \
         ["http://www.agrimoney.com/searchdate/{0}/".format(i)
          for i in range(500)]
+    deny_links = ('(/reduced-service-at-agrimoney.com)((?!:).)*html$',
+                '(/apology-to-agrimoney.com-subscribers)((?!:).)*html$')
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*html$', 
-            deny=('(/news/reduced-service-at-agrimoney.com)((?!:).)*html$',
-                '(/news/apology-to-agrimoney.com-subscribers)((?!:).)*html$')),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*html$',
+            deny=deny_links),
             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/feature/)((?!:).)*html$'),
-             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/marketreport/)((?!:).)*html$'),
-             callback="parse_item", follow=True)
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/feature/)((?!:).)*html$',
+            deny=deny_links),
+            callback="parse_item", follow=True),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/marketreport/)((?!:).)*html$',
+            deny=deny_links),
+            callback="parse_item", follow=True)
     ]
 
     def parse_item(self, response):

@@ -45,6 +45,8 @@ class SanitizeArticlePipeline(object):
 
     def process_item(self, item, spider):
         item['title'] = item['title'].encode('utf-8', 'ignore')
+        if item['title'] in ('News – EURACTIV.com', '\r\n\tWorld Grain\r\n'):
+            raise DropItem("Invalid Item in %s" % item)
         if 'article' in dict(item):
             sanitized_article = " ".join(
                     [x for x in item['article'] if self._check_stop_words(x)])
