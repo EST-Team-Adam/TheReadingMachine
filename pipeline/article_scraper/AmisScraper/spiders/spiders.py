@@ -67,8 +67,10 @@ class BloombergSpider(CrawlSpider):
 
 class NoggersBlogSpider(CrawlSpider):
     name = "noggers"
-    allowed_domains = ["nogger-noggersblog.blogspot.com"]
-    start_urls = ["http://nogger-noggersblog.blogspot.com/"]
+    allowed_domains = ["nogger-noggersblog.blogspot.com",
+                        "http://nogger-noggersblog.blogspot.co.id"]
+    start_urls = ["http://nogger-noggersblog.blogspot.com/",
+                    "http://nogger-noggersblog.blogspot.co.id/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
              callback="parse_item", follow=True)
@@ -81,7 +83,8 @@ class NoggersBlogSpider(CrawlSpider):
         self.logger.info("Scraping Title: " + title)
         item['title'] = title
         item['article'] = article
-        item['link'] = response.url.replace('http://', '').replace('https://', '')
+        item['link'] = response.url.replace('http://', '').replace('https://', '')\
+                            .replace("blogspot.co.id","blogspot.com")
         try:
             token = filter(lambda x: '--' in x, article)
             try:
