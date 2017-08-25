@@ -1,0 +1,264 @@
+---
+title: "Article Quality Assessment - V2"
+output: html_document
+---
+
+```{r, settings, echo=FALSE}
+knitr::opts_chunk$set(cache=FALSE, warning=FALSE,
+    message=FALSE, fig.align='center', fig.width=10)
+```
+
+```{r, load_library}
+library(RSQLite)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+checkDuplicate = function(rawArticle, dataSource){
+    sub = 
+        rawArticle %>%
+        subset(., source == dataSource)
+
+    duplicateCount =
+        sub %>%
+        group_by(title) %>%
+        summarise(count = n()) %>%
+        arrange(., desc(count))
+    
+    cat("Data source: ", dataSource, "\n")
+    cat("Total number of entry: ", NROW(sub), "\n")
+    cat("Unique Titles: ", length(unique(sub$title)), "\n")
+    cat("Most duplicated title is: '", unlist(duplicateCount[1, "title"]), "'\n", sep = "")
+    cat("Duplicate count summary:\n")
+    print(summary(duplicateCount$count))
+    cat("\n")
+}
+
+getDuplicated = function(rawArticle, dataSource, n = 1){
+
+    sub = 
+        rawArticle %>%
+        subset(., source == dataSource)
+
+    duplicateCount =
+        sub %>%
+        group_by(title) %>%
+        summarise(count = n()) %>%
+        arrange(., desc(count))
+
+    
+    sub %>%
+        subset(., title == unlist(duplicateCount[n, "title"]))
+}
+
+```
+
+
+```{r, load_data}
+dataDir = Sys.getenv("DATA_DIR")
+dbName = "/the_reading_machine.db"
+fullDbPath = paste0(dataDir, dbName)
+con <- dbConnect(drv=SQLite(), dbname=fullDbPath)
+statement <- paste0('SELECT * FROM RawArticle')
+rawArticles <-
+    dbGetQuery(con, statement) %>%
+    mutate(date = as.Date(date)) %>% 
+    filter(date>=as.Date('1990-01-01'))
+
+
+#table(rawArticles$source, rawArticles$date < '1990-01-01')
+
+```
+
+There are a few observations we can make in the following graph. First of all Noggers has a very early article with a wrong date. The assumption around the date format in the beginning of the article is, as it seems, correct, except from the first article whose link seems to suggest a probable typo in the article date.
+
+```{r}
+rawArticles[rawArticles$source=='noggers', ] %>% arrange(date) %>% 
+  mutate(incipit=substr(article, 1, 17)) %>% select(., c(link, date, incipit)) %>% head(n=5)
+```
+
+Secondly, We can see that the number of articles from Euractiv has the best coverage and volume, while  the other sources start covering in 2010.
+
+```{r, aggregated_article_count}
+aggregatedCount =
+    rawArticles %>%
+    group_by(date, source) %>%
+    summarise(count = n())
+
+ggplot(data = aggregatedCount, aes(x = date, y = count)) +
+    geom_line() +
+    facet_wrap(~source)
+```
+
+If we look on the log scale, the number of Bloomberg article also
+increased considerably in 2016 which also happened to be the latest
+year. In contrast, both Euractiv and Agrimoney increase either
+steadily or remained constant. Noggers seems to slowly decrease over time.
+
+```{r}
+ggplot(data = aggregatedCount, aes(x = date, y = count)) +
+    geom_line() +
+    facet_wrap(~source) +
+    scale_y_log10() +
+    geom_smooth()
+```
+
+
+
+## Duplicates
+
+One of the issues identified earlier in the project was the
+duplication of the articles. Below is a small summary of the
+duplication for each data source.
+
+```{r}
+for(i in unique(rawArticles$source)){
+    checkDuplicate(rawArticles, i)
+}
+```
+
+The reason for each source differs and require different solution for
+each problem.
+
+### Noggers
+
+Duplicates on Niggers seem to be due to articles split between different pages.
+Rape seed prices for instance
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "noggers", n = 1) %>%
+    select(., c(link, title, article))
+```
+
+or covering of events.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "noggers", n = 2) %>%
+    select(., c(link, title, article))
+```
+
+
+### Agrimoney
+
+The number of duplicated article is low. The most common problem with Agrimoney is how the same article can be featured in different section as demonstrated in the following example.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "agrimoney", n = 2) %>%
+    select(., c(link, title))
+```
+
+
+### Euractive
+
+With Euractive we also have the problem of the same article in different sections
+
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "euractiv", n = 1) %>%
+    select(., c(link, title))
+```
+
+
+In addition to this, some links seem to be duplicated modulo some garbage.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "euractiv", n = 4) %>%
+    select(., c(link, title))
+```
+
+
+
+### World Grain
+
+Finally, we investigate the World Grain data. Despite the huge number
+of duplication, the source came mainly from two issues.
+
+
+The high duplicates are mostly conferencenews feeds covering specific topics or events.
+
+
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "worldgrain", n = 1) %>%
+    select(., c(link, title))
+```
+
+
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "worldgrain", n = 2) %>%
+    select(., c(link, title))
+```
+
+
+It may make sense to aggregate those in a single article grouping by title.
+
+## Length of Articles
+
+Below we show the length of the article for each soruce. It seems that Euroactiv has some extremely long text.
+
+```{r}
+wordCount = 
+    rawArticles %>%
+    mutate(wordCount = str_count(article, "[[:alpha:]]+"))
+
+
+wordCount %>%
+    ggplot(data = ., aes(factor(source), wordCount)) +
+    geom_violin()
+```
+
+
+A investigation reveals that the longest article is actually not an
+article, rather a live feed. This might be a piece of information
+that might be useful in the modelling.
+
+```{r}
+wordCount %>%
+    arrange(., desc(wordCount)) %>%
+    select(., title, article) %>%
+    unique %>%
+    head(., 10)
+```
+
+## Productionise
+
+In order for the scraper to be more scalable,
+there are several changes to that needs to be put in place.
+
+First of all, we need to research a method to only search for
+recent text on text that has not been extracted. The scraper currently
+takes a few hours to execute and the duration will continue to
+increase over time. Thus, it is desirable to reduce the run time and
+redudancy of the scraper.
+
+Secondly, the Bloomberg data does not start until the
+end of 2011. Further, the number of articles remain low prior to early
+2012. This is an indication of a problem with the scraper unable to
+trace back to articles prior to 2011. This
+[article](https://www.bloomberg.com/news/articles/2004-04-18/separating-the-wheat-from-the-chaff)
+is from 2004 and has the exact same link structure as one in recent
+year was not scrapped. Further investigation is required and
+improvements to the scraper is required. In addition to the incompleteness of the source, pesky conditions on site usage block the spiders too often.
+
+
+
+## List of TODOs
+
+
+P1:
+
+* Investigate the Bloomberg scraper and identify the problem
+* Scrap data for Bloomberg prior to 2012.
+* Deal with Bloomberg's TOC violation
+
+P3:
+
+* Skip same article from different news section.

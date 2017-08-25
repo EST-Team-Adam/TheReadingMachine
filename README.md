@@ -13,7 +13,7 @@ in the `data` directory.
 
 Then run the setup script
 
-``sh
+```sh
 source setup.sh
 ```
 

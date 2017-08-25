@@ -4,7 +4,7 @@ import sys
 from twitter import TwitterHTTPError
 
 
-def get_timeline(screen_name, t, verbose = F):
+def get_timeline(screen_name, t, verbose = False):
 
     all_tweets = []
     new_tweets = t.statuses.user_timeline(screen_name=screen_name, count=200)

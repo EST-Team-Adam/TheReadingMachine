@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import time
+from datetime import datetime
 import shutil
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -28,25 +29,27 @@ os.makedirs(log_dir)
 
 process = CrawlerProcess(get_project_settings())
 
-spiders = ['bloomberg', 'noggers', 'worldgrain', 'euractiv', 'agrimoney']
+# 'bloomberg' removed temporarily.
+spiders = [ 'noggers', 'worldgrain', 'euractiv', 'agrimoney']
 
 for spider in spiders:
     process.crawl(spider)
 
 process.start()
 
-json_file = data_dir + '/blog_articles_{0}.jsonl'.format(
-    time.strftime("%d_%m_%Y"))
-if os.path.isfile(json_file):
-    flattened_article_df = pd.read_json(json_file, lines=True)
+flattened_article_df = pd.DataFrame()
+for spider in spiders:
+  json_file = data_dir + '/blog_articles_{0}_{1}.jsonl'.format(time.strftime("%d_%m_%Y"), spider)
+  if os.path.isfile(json_file):
+      flattened_article_df = flattened_article_df.append(pd.read_json(json_file, lines=True), ignore_index=True)
+flattened_article_df.date = flattened_article_df.date.apply(lambda d: datetime.strptime(str(d), '%Y-%m-%d %H:%M:%S'))
 
 # Save output file
-field_type = {'source': sqlalchemy.types.Unicode,
-              'title': sqlalchemy.types.Unicode,
-              'date': sqlalchemy.types.NVARCHAR(length=255),
-              'link': sqlalchemy.types.Unicode,
-              'article': sqlalchemy.types.Unicode,
-              'source': sqlalchemy.types.Unicode
+field_type = {'source': sqlalchemy.types.Unicode(length=255),
+              'title': sqlalchemy.types.Unicode(length=255),
+              'date': sqlalchemy.types.Date,
+              'link': sqlalchemy.types.Unicode(length=255),
+              'article': sqlalchemy.types.UnicodeText
               }
 
 flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,
