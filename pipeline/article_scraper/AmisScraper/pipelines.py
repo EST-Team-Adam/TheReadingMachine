@@ -38,12 +38,19 @@ class SanitizeArticlePipeline(object):
         word = word.strip()
         return len(word) > 2 and word not in self.stop_words
 
+    def _sanitize_article(self, article):
+        return(article.replace('\r', ' ').replace('\n', ' ')\
+            .replace('\\r', ' ').replace('\\n', ' ')\
+            .replace('\t', ' ').replace('\\"','').replace('"',''))
+
     def process_item(self, item, spider):
+        item['title'] = item['title'].encode('utf-8', 'ignore')
+        if item['title'] in ('News – EURACTIV.com', '\r\n\tWorld Grain\r\n'):
+            raise DropItem("Invalid Item in %s" % item)
         if 'article' in dict(item):
             sanitized_article = " ".join(
                     [x for x in item['article'] if self._check_stop_words(x)])
-            sanitized_article = sanitized_article.replace('\n', '')\
-            .replace('\t', ' ')
+            sanitized_article = self._sanitize_article(sanitized_article)
             try:
                 sanitized_article = sanitized_article.encode('utf-8', 'ignore')
             except UnicodeDecodeError:
@@ -60,24 +67,28 @@ class SanitizeArticlePipeline(object):
 class AmisJsonPipeline(object):
 
     def __init__(self):
-        pass
+        self.datafiles = {}
 
     def open_spider(self, spider):
-        self.datafile = open(data_dir + '/blog_articles_{0}.jsonl'.format(
-            time.strftime("%d_%m_%Y")), 'a')
+        if spider.name not in self.datafiles.keys():
+            self.datafiles[spider.name] = open(data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
+                time.strftime("%d_%m_%Y"), spider.name), 'a')#, 0)
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):
+        spider.logger.info("Processing Item: " + item['title'])
         self.lock.acquire()
         try:
             item_dict = dict(item)
             item_dict['source'] = spider.name
             line = json.dumps(item_dict, ensure_ascii=False) + "\n"
-            self.datafile.write(line)
+            self.datafiles[spider.name].write(line)
+            spider.logger.info("Written Item: " + item['title'])
         except (UnicodeDecodeError, UnicodeEncodeError):
-            pass
+            raise DropItem("Formatting Error in %s" % item)
         self.lock.release()
         return item
 
     def close_spider(self, spider):
-        self.datafile.close()
+        for datafile in self.datafiles.values():
+            datafile.close()

@@ -7,7 +7,6 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 
 
-
 class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
     """
     Need this to fix the encoding error.
@@ -35,12 +34,11 @@ class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
 
 class BloombergSpider(CrawlSpider):
     name = "bloomberg"
-    # logf = open("logs/bloomberg.log", "w")
     allowed_domains = ["bloomberg.com"]
     start_urls = ["http://www.bloomberg.com"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/articles/)((?!:).)*$'),
-             callback="parse_item", follow=True),
+            callback="parse_item", follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*$'),
              callback="parse_item", follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/)((?!:).)*$'),
@@ -49,7 +47,10 @@ class BloombergSpider(CrawlSpider):
 
     def parse_item(self, response):
         item = NewsArticleItem()
-        title = response.xpath('//title/text()')[0].extract()
+        title = response.xpath('//title/text()').extract_first()
+        if title == 'Bloomberg':
+            title = response.xpath('//meta[@property="og:title"]/text()').extract_first()
+
         article = response.xpath('//p/text()').extract()
         self.logger.info("Scraping Title: " + title)
         try:
@@ -62,14 +63,14 @@ class BloombergSpider(CrawlSpider):
             return item
         except Exception as e:
             pass
-            # self.logf.write("Failed to scrape {0}: {1}\n".format(str(response.url), str(e)))
 
 
 class NoggersBlogSpider(CrawlSpider):
     name = "noggers"
-    # logf = open("logs/noggers.log", "w")
-    allowed_domains = ["nogger-noggersblog.blogspot.it"]
-    start_urls = ["http://nogger-noggersblog.blogspot.it/"]
+    allowed_domains = ["nogger-noggersblog.blogspot.com",
+                        "http://nogger-noggersblog.blogspot.co.id"]
+    start_urls = ["http://nogger-noggersblog.blogspot.com/",
+                    "http://nogger-noggersblog.blogspot.co.id/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
              callback="parse_item", follow=True)
@@ -82,12 +83,13 @@ class NoggersBlogSpider(CrawlSpider):
         self.logger.info("Scraping Title: " + title)
         item['title'] = title
         item['article'] = article
-        item['link'] = response.url.replace('http://', '').replace('https://', '')
+        item['link'] = response.url.replace('http://', '').replace('https://', '')\
+                            .replace("blogspot.co.id","blogspot.com")
         try:
             token = filter(lambda x: '--' in x, article)
             try:
                 raw_date = token[0].split(' -- ')[0].replace('\n', '')
-                date = datetime.strptime(raw_date, '%d/%M/%y')
+                date = datetime.strptime(raw_date, '%d/%m/%y')
             except (ValueError, IndexError):
                 try:
                     raw_date = title.split("Nogger's Blog: ")[1]
@@ -98,44 +100,61 @@ class NoggersBlogSpider(CrawlSpider):
             return item
         except Exception as e:
             pass
-            # self.logf.write("Failed to scrape {0}: {1}\n".format(str(response.url), str(e)))
 
 
 class WorldGrainSpider(CrawlSpider):
+
+    def _parse_wg_date(self, ds):
+        for fmt in ('%B %d, %Y', '%b. %d, %Y', '%m/%d/%Y'):
+            try:
+                return(datetime.strptime(ds, fmt))
+            except ValueError:
+                pass
+        raise ValueError('no valid date format found for ' + ds)
+
+    def _clean_date(self, raw):
+        clean = raw.replace('\t','').replace('\n','')\
+        .replace('-','').replace('WorldGrain.com,','')\
+        .replace('Decemebr', 'December')\
+        .replace('janaury', 'January')\
+        .replace('Aprll', 'April')\
+        .replace('Sept.', 'September').strip()
+        
+        return(clean)
+
     name = "worldgrain"
-    # logf = open("logs/worldgrain.log", "w")
     allowed_domains = ["world-grain.com"]
     start_urls = ["http://www.world-grain.com"] + \
                  ["http://www.world-grain.com/News/Archive.aspx?page={0}&year={1}&month=0".format(i, j)
-                  for i in range(1, 50) for j in range(2006, 2017)]
+                  for i in range(1, 100) for j in range(2006, 2017)]
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/news_home/)((?!:).)*$'),
-             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/news_home/)((?!:).)*$'),
-             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/)((?!:).)*$'),
-             callback="parse_item", follow=True)
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/news_home/)((?!:).)*$',
+            deny='(m.world-grain.com)((?!:).)*$'),
+        callback="parse_item", follow=True),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/news_home/)((?!:).)*$',
+            deny='(m.world-grain.com)((?!:).)*$'),
+        callback="parse_item", follow=True),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/)((?!:).)*$',
+            deny='(m.world-grain.com)((?!:).)*$'),
+        callback="parse_item", follow=True)
     ]
 
     def parse_item(self, response):
         item = NewsArticleItem()
-        title = response.xpath('//title/text()')[0].extract()
+        title = response.xpath('//title/text()').extract_first()
         article = response.xpath('//p/text()').extract() + \
-            response.xpath('//br/text()').extract()
+            response.xpath('//br/text()').extract() + \
+            response.xpath('//div[@class="article"]/text()').extract() + \
+            response.xpath('//div["font-family: arial; font-size: 13px"]/text()').extract()
         self.logger.info("Scraping Title: " + title)
         item['title'] = title
         item['article'] = article
         item['link'] = response.url.replace('http://', '').replace('https://', '')
-
-        try:
-            raw_date = "{0}-{1}".format(response.url.split("/")
-                                        [-2], response.url.split("/")[-3])
-            date = datetime.strptime(raw_date, '%m-%Y')
-            item['date'] = str(date)
-            return item
-        except Exception as e:
-            pass
-            # self.logf.write("Failed to scrape {0}: {1}\n".format(str(response.url), str(e)))
+        
+        raw_date = (response.xpath('//span[@class="news_article_date"]/text()').extract_first() or
+            response.xpath('//td[@class="pubName"]/text()').extract_first())
+        item['date'] = str(self._parse_wg_date(self._clean_date(raw_date)))
+        return item
 
 
 class EuractivSpider(CrawlSpider):
@@ -160,6 +179,7 @@ class EuractivSpider(CrawlSpider):
             item['link'] = response.url.replace('http://', '').replace('https://', '')
         except UnicodeDecodeError:
                 pass
+        
         self.logger.info("Scraping Title: " + title)
         
         try:
@@ -184,13 +204,18 @@ class AgriMoneySpider(CrawlSpider):
     ] + ["http://www.agrimoney.com/search/{0}/".format(i) for i in range(600)] + \
         ["http://www.agrimoney.com/searchdate/{0}/".format(i)
          for i in range(500)]
+    deny_links = ('(/reduced-service-at-agrimoney.com)((?!:).)*html$',
+                '(/apology-to-agrimoney.com-subscribers)((?!:).)*html$')
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*html$'),
-             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/feature/)((?!:).)*html$'),
-             callback="parse_item", follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/marketreport/)((?!:).)*html$'),
-             callback="parse_item", follow=True)
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*html$',
+            deny=deny_links),
+            callback="parse_item", follow=True),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/feature/)((?!:).)*html$',
+            deny=deny_links),
+            callback="parse_item", follow=True),
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/marketreport/)((?!:).)*html$',
+            deny=deny_links),
+            callback="parse_item", follow=True)
     ]
 
     def parse_item(self, response):

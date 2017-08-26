@@ -27,11 +27,10 @@ twitter_output = ctr.get_timelines(
 # Save output file
 field_type = {'source': sqlalchemy.types.Unicode(length=255),
               'title': sqlalchemy.types.Unicode(length=255),
-              'date': sqlalchemy.sqlalchemy.types.Date(),
+              'date': sqlalchemy.types.Date(),
               'link': sqlalchemy.types.Unicode(length=255),
-              'article': sqlalchemy.types.UnicodeText,
+              'article': sqlalchemy.types.UnicodeText
               }
-
 flattened_article_df = pd.DataFrame(twitter_output)
 flattened_article_df.to_sql(con=engine, name=target_data_table, index=False,
                             if_exists='replace',
