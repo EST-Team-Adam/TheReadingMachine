@@ -9,7 +9,6 @@ from datetime import timedelta
 # NOTE (Michael): We will use the no pos table for now.
 topicModelTable = 'NoposTopicModel'
 model_start_date = datetime(2010, 1, 1).date()
-forecast_period = 90
 
 
 def get_igc_price(response=None):
@@ -73,15 +72,10 @@ def harmonise_article(sentiment_col='compound_sentiment',
     sentiment_scored_article = get_sentiment_scored_article()
     topic_modelled_article = get_topic_modelled_article()
     igc_price = get_igc_price(response='GOI')
-    max_article_date = sentiment_scored_article['date'].max()
-    igc_price['SGOI'] = (pd.concat([igc_price['GOI'][forecast_period:],
-                                    pd.Series(np.nan * forecast_period)],
-                                   axis=0)
-                         .reset_index(drop=True))
 
-    model_price = igc_price[(igc_price['date'] >= model_start_date
-                             + timedelta(days=forecast_period))
-                            & (igc_price['date'] <= max_article_date)]
+    article_max_date = sentiment_scored_article[date_col].max()
+    model_price = igc_price[(igc_price[date_col] >= model_start_date) &
+                            (igc_price[date_col] <= article_max_date)]
 
     # HACK (Michael): There is an increase trend in the size of the
     #                 value in the topic. In order to eliminate this
@@ -126,7 +120,7 @@ def harmonise_article(sentiment_col='compound_sentiment',
     #                 with NA assuming there are no information
     #                 available.
     harmonised_data = (pd.merge(model_price, aggregated_article,
-                                on='date', how='inner')
+                                on='date', how='left')
                        .fillna(0))
 
     return harmonised_data
