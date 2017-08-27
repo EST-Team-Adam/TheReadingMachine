@@ -37,10 +37,10 @@ def scraper_post_processing(raw_articles, model_start_date):
 
     # If an ID has already been created, then we drop it.
     if 'id' in raw_articles.columns:
-        processed_articles = raw_articles.drop('id', 1)
+        raw_articles = raw_articles.drop('id', 1)
 
     # Drop duplciates based on article content
-    processed_articles = (processed_articles
+    processed_articles = (raw_articles
                           .drop_duplicates(subset='article'))
 
     # Remvoe entries that are associated with maintenance or service.
