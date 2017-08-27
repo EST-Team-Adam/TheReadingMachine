@@ -5,6 +5,7 @@ from datetime import datetime
 from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
+from scrapy.exceptions import DropItem
 
 
 class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
@@ -153,7 +154,11 @@ class WorldGrainSpider(CrawlSpider):
         
         raw_date = (response.xpath('//span[@class="news_article_date"]/text()').extract_first() or
             response.xpath('//td[@class="pubName"]/text()').extract_first())
-        item['date'] = str(self._parse_wg_date(self._clean_date(raw_date)))
+        date = self._parse_wg_date(self._clean_date(raw_date))
+        if clean_date.year < 1900:
+            raise DropItem("Incorrect Format for Date in %s" % item)
+        else:    
+            item['date'] = str(clean_date)
         return item
 
 
