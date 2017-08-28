@@ -1,19 +1,11 @@
 import pandas as pd
 import numpy as np
 import scipy as sp
-import Stemmer
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
 from scipy.cluster.hierarchy import fcluster
-
-
-class StemmedTfidfVectorizer(TfidfVectorizer):
-    def build_analyzer(self):
-        analyzer = super(TfidfVectorizer, self).build_analyzer()
-        english_stemmer = Stemmer.Stemmer('en')
-        return lambda doc: english_stemmer.stemWords(analyzer(doc))
 
 
 class TopicModel(object):
@@ -53,12 +45,12 @@ class TopicModel(object):
         '''
 
         self.corpus = corpus
-        self.tf_vectorizer = StemmedTfidfVectorizer(max_df=0.95,
-                                                    min_df=2,
-                                                    stop_words='english',
-                                                    analyzer='word',
-                                                    ngram_range=(1, 1),
-                                                    max_features=self.n_features)
+        self.tf_vectorizer = TfidfVectorizer(max_df=0.95,
+                                             min_df=2,
+                                             stop_words='english',
+                                             analyzer='word',
+                                             ngram_range=(1, 1),
+                                             max_features=self.n_features)
         self.tf = self.tf_vectorizer.fit_transform(self.corpus)
         self.tf_feature_names = self.tf_vectorizer.get_feature_names()
         self.tf_freqs = [(word, self.tf.getcol(idx).sum())
@@ -160,7 +152,7 @@ class TopicModel(object):
             lambda x: x.groupby(self.cluster_assignments).mean(), axis=1)
 
 
-def model_article_topic(articles):
+def model_article_topic(articles, article_col='article', id_col='id'):
     '''Wrapper function to create a Topic Model instance, default
     n_features = 10000, n_topics = 100.
     '''
@@ -168,7 +160,7 @@ def model_article_topic(articles):
     model = TopicModel()
 
     # Featurize the corpus and fit the model
-    model.featurize(articles['article'])
+    model.featurize(articles[article_col])
     model.fit()
 
     # Extract the topics, defaulst to 100 topics
@@ -186,5 +178,8 @@ def model_article_topic(articles):
             lambda x: x.groupby(cluster_assignments).mean(),
             axis=1)
     )
+
+    # Re-assign the id
+    model.nmf_documents_topics[id_col] = articles[id_col]
 
     return model
