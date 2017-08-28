@@ -1,13 +1,10 @@
 from __future__ import division
 import os
 import pandas as pd
-import numpy as np
 from sqlalchemy import create_engine
 from datetime import datetime
-from datetime import timedelta
 
-# NOTE (Michael): We will use the no pos table for now.
-topicModelTable = 'NoposTopicModel'
+topicModelTable = 'TopicModel'
 model_start_date = datetime(2010, 1, 1).date()
 
 
@@ -38,14 +35,6 @@ def get_topic_modelled_article():
         'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
     topic_modelled_article = pd.read_sql(
         'SELECT * FROM {}'.format(topicModelTable), engine)
-
-    # Rename the columns
-    #
-    # NOTE (Michael): This step should be performed in TopicModel.
-    new_names = {n: n.replace(' ', '_')
-                 for n in topic_modelled_article.columns}
-    topic_modelled_article.rename(columns=new_names, inplace=True)
-
     return topic_modelled_article
 
 
