@@ -47,15 +47,29 @@ def get_commodity_tagged_article():
     return commodity_tagged_article
 
 
-def compute_topic_score(sentiment, topic, id_col='id'):
+def compute_topic_score(pos_sentiment_col, neg_sentiment_col, topic,
+                        id_col='id'):
     original_id = topic[id_col]
-    scored_topic = topic.drop(id_col, axis=1).apply(lambda x: x * sentiment)
+    # scored_topic = topic.drop(id_col, axis=1).apply(lambda x: x * sentiment)
+    pos_scored_topic = topic.drop(id_col, axis=1).apply(
+        lambda x: x * pos_sentiment_col)
+    new_pos_names = {n: n + '_pos'
+                     for n in topic.columns}
+    pos_scored_topic.rename(columns=new_pos_names, inplace=True)
+    neg_scored_topic = topic.drop(id_col, axis=1).apply(
+        lambda x: x * -neg_sentiment_col)
+    new_neg_names = {n: n + '_neg'
+                     for n in topic.columns}
+    neg_scored_topic.rename(columns=new_neg_names, inplace=True)
+    scored_topic = pd.concat([pos_scored_topic, neg_scored_topic], axis=1)
+
     # TODO (Michael): Need to think how to normalise.
     scored_topic[id_col] = original_id
     return scored_topic
 
 
-def harmonise_article(sentiment_col='compound_sentiment',
+def harmonise_article(pos_sentiment_col='positive_sentiment',
+                      neg_sentiment_col='negative_sentiment',
                       id_col='id', date_col='date'):
 
     sentiment_scored_article = get_sentiment_scored_article()
@@ -82,14 +96,11 @@ def harmonise_article(sentiment_col='compound_sentiment',
     #                 the sum is 0. Since the division of 0 is NaN we
     #                 replace it with 0.
 
-    scaled_topic = (topic_modelled_article.drop(id_col, axis=1)
-                    .apply(lambda x: x / sum(x), axis=1)
-                    .fillna(0))
-    scaled_topic[id_col] = topic_modelled_article[id_col]
     commodity_tagged_article = get_commodity_tagged_article()
     scored_topic = compute_topic_score(
-        sentiment_scored_article[sentiment_col], scaled_topic,
-        id_col)
+        pos_sentiment_col=sentiment_scored_article[pos_sentiment_col],
+        neg_sentiment_col=sentiment_scored_article[neg_sentiment_col],
+        topic=topic_modelled_article, id_col=id_col)
 
     processed_article_list = [scored_topic, commodity_tagged_article]
 
@@ -103,6 +114,7 @@ def harmonise_article(sentiment_col='compound_sentiment',
                           .drop('id', axis=1)
                           .groupby('date')
                           .mean()
+                          .apply(lambda x: (x - x.mean()) / x.std(), axis=0)
                           .reset_index())
 
     # NOTE (Michael): dates without sentiments and topic are filled
