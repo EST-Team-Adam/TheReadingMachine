@@ -13,7 +13,7 @@ getHarmonisedData = function(){
 getTopicVariables = function(){
     ## Set topic variable columns
     topicVariables =
-        dbGetQuery(con, "PRAGMA table_info(NoposTopicModel)") %>%
+        dbGetQuery(con, "PRAGMA table_info(TopicModel)") %>%
         subset(., select = name, subset = name != "id") %>%
         unlist(., use.names = FALSE) %>%
         gsub(" ", "_", .)
@@ -29,24 +29,86 @@ getPriceData = function(){
     priceData
 }
 
+trainStackLasso = function(trainData, testData, regularisation, modelVariables,
+                           sampleRate = 10/length(modelVariables),
+                           responseVariable, bootstrapIteration,
+                           smoothPrediction, forecastPeriod){
 
-mlrModelSelector = function(data, testPeriod, models){
-    modelSample = NROW(data)
-    trainIndex = 1:(modelSample - testPeriod)
-    testIndex = (modelSample - testPeriod + 1):modelSample
+    ## Initialise variables
+    totalVariableCount = length(modelVariables)
+    completeData = rbind(trainData, testData)
+    predictions = matrix(NA, nr = NROW(completeData), nc = bootstrapIteration)
+    coefficients = matrix(0, nr = totalVariableCount + 1, nc = bootstrapIteration)
+    rownames(coefficients) = c("(Intercept)", modelVariables)
+    varCount = c()
+    coefCount = c()
+    cvMin = c()
+
+
+    # Bootstrap sample for model
+    for(i in 1:bootstrapIteration){
+        baggingSize = min(totalVariableCount, round(rexp(1, sampleRate)) + 2)
+        baggingVariable = sample(modelVariables, baggingSize)
+        currentModel = cv.glmnet(as.matrix(trainData[, baggingVariable]),
+                                 trainData[[responseVariable]],
+                                 nfold = 10,
+                                 standardize = FALSE)
+
+        ## Update the prediciton matrix
+        predictions[, i] = c(predict(currentModel,
+                              newx = as.matrix(completeData[baggingVariable],
+                                               s = "lambda.min")))
+
+        ## Update the coefficient matrix
+        currentCoef = coef(currentModel)
+        coefficients[currentCoef@Dimnames[[1]][currentCoef@i], i] = currentCoef@x[currentCoef@i]
+
+        ## Update the variable and coefficient count
+        varCount = c(varCount, length(baggingVariable))
+        coefCount = c(coefCount, length(currentCoef@x[currentCoef@i]))
+        cvMin = c(cvMin, min(currentModel$cvm))
+    }
+
+    ## Weight the model and coef based on cross-validation error
+    baggingWeights = (1/cvMin)/sum(1/cvMin)
+
+    ## Calculate prediction
+    finalPrediction = (predictions %*% baggingWeights)
+    if(smoothPrediction){
+        finalPrediction = lowess(1:length(finalPrediction),
+                                 finalPrediction,
+                                 f = forecastPeriod/length(finalPrediction))$y
+    }
+
+    ## Calculate the weighted coefficients
+    weightedCoef = c(coefficients %*% baggingWeights)
+    names(weightedCoef) = rownames(coefficients)
+
+    avgVariable = mean(varCount)
+    avgCoefCount = mean(coefCount)
+    cat("Average variables sampled in each bootstrap: ", avgVariable, "\n")
+    cat("Average number of coefficients in each model: ", avgCoefCount, "\n")
+    cat("Top 10 variable by coefficient size: \n")
+    print(tail(sort(abs(weightedCoef)), 10))
     
-    task = makeRegrTask(data = data, id = "prediction", target = "response")
-    learnerList = lapply(models, makeLearner)
-    modelList = lapply(learnerList, function(x) train(x, task = task, subset = trainIndex))
-    testPred = lapply(modelList, function(x) predict(x, task = task, subset = testIndex))
-    bestModelIndex = which.min(unlist(lapply(testPred, performance)))
-    bestModel = models[bestModelIndex]
-    bestModel
+    list(prediction = finalPrediction, coef = weightedCoef)
 }
 
-getSortedCoef = function(model){
-    coef = coef(model$learner.model, s = 0.01)
-    coef.df = data.frame(variable = rownames(coef), coef = 0)
-    coef.df[coef@i + 1, 'coef'] = coef@x
-    arrange(coef.df, coef)
+plotPrediction = function(completeData, forecastPeriod, completePrediction,
+                          priceData, cutoffDate, dateVar = "date"){
+    prediction.df =
+        data.frame(date = completeData$date + forecastPeriod,
+                   prediction = completePrediction) %>%
+        merge(., priceData, all = TRUE, by = dateVar) %>%
+        mutate(`GOI Trend` = lowess(date, GOI, f = 0.05)$y) %>%
+        melt(., id.var = dateVar)
+
+    tickDates = c(as.Date(paste0(unique(substring(prediction.df$date, 1, 4)), "-01-01")),
+                  cutoffDate,
+                  max(prediction.df$date))
+    ggplot(data = prediction.df, aes(x = date, y = value, col = variable)) +
+        geom_line() +
+        geom_vline(xintercept = as.numeric(cutoffDate)) +
+        scale_x_date(breaks = tickDates) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }

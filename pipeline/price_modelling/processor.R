@@ -3,24 +3,11 @@ library(dplyr)
 library(forecast)
 library(reshape2)
 library(ggplot2)
+library(glmnet)
 source("controller.R")
 
 ########################################################################
 ## Initialisation
-########################################################################
-
-## HACK (Michael): This first date is due to the fact that sentiment
-##                 score were vastly different prior and after
-##                 2013. Prior to 2013, the sentiment has mean clsoe
-##                 to 0, while after 2013, the mean of sentiments has
-##                 risen to approximately 0.25.
-firstStartDate = as.Date("2013-01-01")
-endDate = as.Date("2016-04-18")
-target = "IGC.GOI"
-forecastPeriod = 90
-
-########################################################################
-## Read the data
 ########################################################################
 
 ## connect to the sqlite file
@@ -29,8 +16,12 @@ dbName = "/the_reading_machine.db"
 fullDbPath = paste0(dataDir, dbName)
 con = dbConnect(drv=SQLite(), dbname=fullDbPath)
 
+## initial parameters
+forecastPeriod = 180
+filterCoef = 1
 
-topicVariables = getTopicVariables()
+## topicVariables = getTopicVariables()
+topicVariables = paste0(rep(getTopicVariables(), each = 2), c("_neg", "_pos"))
 priceData = getPriceData()
 complete.df =
     getHarmonisedData() %>%
@@ -41,53 +32,42 @@ complete.df =
     ##                 prediction.
     subset(., select = -c(grep("contain", colnames(.)))) %>%
     mutate(date = as.Date(date, "%Y-%m-%d")) %>%
-    rename(response = SGOI)
+    mutate(response = lead(GOI, forecastPeriod)) %>%
+    na.omit
 
 
+complete.df[topicVariables] = stats::filter(complete.df[topicVariables],
+                                            filterCoef, method = "recursive", side = 1) * filterCoef
 
-for(i in topicVariables){
-    complete.df[i] = cumsum(scale(aggregatedData[i]))
-}
 
 
 ########################################################################
-## Model to select best model
+## Model training and prediction
 ########################################################################
 
-
-bestModelName =
-    complete.df %>%
-    select(., -date) %>%
-    mlrModelSelector(data = .,
-                     testPeriod = 180,
-                     models =  c("regr.lm", "regr.glmnet", "regr.cvglmnet"))
-
-########################################################################
-## Prediction
-########################################################################
-
-## Re-fit full data with best model
-bestLearner = makeLearner(bestModelName)
-task = complete.df %>%
-    select(., -date) %>%
-    makeRegrTask(data = , id = "prediction", target = "response")
-bestModel = train(bestLearner, task = task)
+holdoutPeriod = 365
+train.df = complete.df[1:(NROW(complete.df) - holdoutPeriod), ]
+test.df = complete.df[(NROW(complete.df) - holdoutPeriod + 1):NROW(complete.df), ]
+cutoffDate = max(train.df$date) + forecastPeriod
 
 
-prediction.df = 
-    complete.df %>%
-    subset(., select = -date) %>%
-    predict(bestModel, newdata = .) %>%
-    `$`(data) %>%
-    cbind(date = complete.df$date, .) %>%
-    mutate(date = date + forecastPeriod) %>%
-    mutate(prediction = lowess(date, response, f = 90/length(response))$y) %>%
-    subset(., select = -c(response, truth)) %>%
-    merge(., priceData, all = TRUE, by = "date") %>%
-    melt(., id.var = "date")
 
-ggplot(data = prediction.df, aes(x = date, y = value, col = variable)) +
-    geom_line()
 
-getSortedCoef(bestModel)
+model = trainStackLasso(trainData = train.df,
+                        testData = test.df,
+                        regularisation = regularisation,
+                        modelVariables = topicVariables,
+                        responseVariable = "response",
+                        sampleRate = 10/length(topicVariables),
+                        bootstrapIteration = 5,
+                        smoothPrediction = TRUE,
+                        forecastPeriod = forecastPeriod)
 
+plotPrediction(completeData = complete.df,
+               forecastPeriod = forecastPeriod,
+               completePrediction = model$prediction,
+               priceData = priceData[, c("date", "GOI")],
+               cutoffDate = cutoffDate)
+
+## NOTE (Michael): Also remove popular words and text processing in
+##                 the word2vec exercise in the article processing.
