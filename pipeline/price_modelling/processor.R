@@ -53,15 +53,16 @@ cutoffDate = max(train.df$date) + forecastPeriod
 
 
 
-model = trainStackLasso(trainData = train.df,
-                        testData = test.df,
-                        regularisation = regularisation,
-                        modelVariables = topicVariables,
-                        responseVariable = "response",
-                        sampleRate = 10/length(topicVariables),
-                        bootstrapIteration = 5,
-                        smoothPrediction = TRUE,
-                        forecastPeriod = forecastPeriod)
+model = trainStackElasticnet(trainData = train.df,
+                             testData = test.df,
+                             regularisation = regularisation,
+                             modelVariables = topicVariables,
+                             responseVariable = "response",
+                             sampleRate = 10/length(topicVariables),
+                             bootstrapIteration = 50,
+                             smoothPrediction = TRUE,
+                             forecastPeriod = forecastPeriod,
+                             alpha = 1)
 
 plotPrediction(completeData = complete.df,
                forecastPeriod = forecastPeriod,

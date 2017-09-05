@@ -29,10 +29,11 @@ getPriceData = function(){
     priceData
 }
 
-trainStackLasso = function(trainData, testData, regularisation, modelVariables,
+trainStackElasticnet = function(trainData, testData, regularisation, modelVariables,
                            sampleRate = 10/length(modelVariables),
                            responseVariable, bootstrapIteration,
-                           smoothPrediction, forecastPeriod){
+                           smoothPrediction, forecastPeriod,
+                           alpha = 1){
 
     ## Initialise variables
     totalVariableCount = length(modelVariables)
@@ -52,7 +53,8 @@ trainStackLasso = function(trainData, testData, regularisation, modelVariables,
         currentModel = cv.glmnet(as.matrix(trainData[, baggingVariable]),
                                  trainData[[responseVariable]],
                                  nfold = 10,
-                                 standardize = FALSE)
+                                 standardize = FALSE,
+                                 alpha = alpha)
 
         ## Update the prediciton matrix
         predictions[, i] = c(predict(currentModel,
