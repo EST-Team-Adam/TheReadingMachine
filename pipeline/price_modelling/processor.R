@@ -40,11 +40,9 @@ complete.df =
                             filterCoef = filterCoef, topicVariables = topicVariables)
 
 ## Create train and test set
-prediction.df = complete.df[is.na(complete.df[[responseVariable]]), ]
-model.df = complete.df[!is.na(complete.df[[responseVariable]]), ]
-train.df = model.df[1:(NROW(model.df) - holdoutPeriod), ]
-test.df = model.df[(NROW(model.df) - holdoutPeriod + 1):NROW(model.df), ]
-cutoffDate = max(train.df$date) + forecastPeriod
+datasets = buildDatasets(completeData = complete.df,
+                         forecastPeriod = forecastPeriod,
+                         holdoutPeriod = holdoutPeriod)
 
 
 
@@ -54,19 +52,20 @@ cutoffDate = max(train.df$date) + forecastPeriod
 
 
 ## Train the model and make prediction
-model = trainBagElasticnet(trainData = train.df,
-                           testData = test.df,
-                           predictionData = prediction.df,
-                           modelVariables = topicVariables,
-                           responseVariable = "response",
-                           sampleRate = sampleRate,
-                           bootstrapIteration = bootstrapIteration,
-                           smoothPrediction = TRUE,
-                           forecastPeriod = forecastPeriod,
-                           alpha = alpha,
-                           s = regularisation)
+model = with(datasets,
+             trainBagElasticnet(trainData = trainData,
+                                testData = testData,
+                                predictionData = predictionData,
+                                modelVariables = topicVariables,
+                                responseVariable = "response",
+                                sampleRate = sampleRate,
+                                bootstrapIteration = bootstrapIteration,
+                                smoothPrediction = TRUE,
+                                forecastPeriod = forecastPeriod,
+                                alpha = alpha,
+                                s = regularisation))
 
 ## Plot the prediction
 plotPrediction(completePrediction = model$prediction,
                priceData = priceData[, c("date", "GOI")],
-               cutoffDate = cutoffDate)
+               cutoffDate = datasets$cutoffDate)

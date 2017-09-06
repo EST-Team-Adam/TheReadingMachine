@@ -53,6 +53,19 @@ getPriceData = function(){
     priceData
 }
 
+buildDatasets = function(completeData, forecastPeriod, holdoutPeriod){
+    predictionData = completeData[is.na(completeData[[responseVariable]]), ]
+    modelData = completeData[!is.na(completeData[[responseVariable]]), ]
+    trainData = modelData[1:(NROW(modelData) - holdoutPeriod), ]
+    testData = modelData[(NROW(modelData) - holdoutPeriod + 1):NROW(modelData), ]
+    cutoffDate = max(trainData$date) + forecastPeriod
+    list(predictionData = predictionData,
+         trainData = trainData,
+         testData = testData,
+         cutoffDate = cutoffDate)
+}
+
+
 trainBagElasticnet = function(trainData, testData, predictionData,
                               modelVariables,
                               sampleRate = 10/length(modelVariables),
@@ -132,7 +145,7 @@ trainBagElasticnet = function(trainData, testData, predictionData,
 plotPrediction = function(completePrediction,
                           priceData, cutoffDate, dateVar = "date"){
     prediction.df =
-        completePrediction
+        completePrediction %>%
         merge(., priceData, all = TRUE, by = dateVar) %>%
         mutate(`GOI Trend` = lowess(date, GOI, f = 0.05)$y) %>%
         melt(., id.var = dateVar)
