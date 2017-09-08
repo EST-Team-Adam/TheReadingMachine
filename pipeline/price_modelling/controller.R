@@ -118,8 +118,8 @@ trainBagElasticnet = function(trainData, testData, predictionData,
     weightedPrediction = (predictions %*% baggingWeights)
     if(smoothPrediction){
         weightedPrediction = lowess(1:length(weightedPrediction),
-                                 weightedPrediction,
-                                 f = forecastPeriod/length(weightedPrediction))$y
+                                    weightedPrediction,
+                                    f = forecastPeriod/length(weightedPrediction))$y
     }
 
     finalPrediction = data.frame(date = completeData$date + forecastPeriod,
