@@ -134,8 +134,15 @@ db_data_harmonisation = DummyOperator(task_id='db_data_harmonisation', dag=dag)
 
 # Build price model
 # --------------------
-price_model = DummyOperator(task_id='price_model', dag=dag)
-db_price_model = DummyOperator(task_id='db_price_model', dag=dag)
+price_modelling_script_path = os.path.join(
+    process_directory, 'price_modelling/processor.py')
+price_modelling_command = 'python {}'.format(
+    price_modelling_script_path)
+price_modelling = BashOperator(bash_command=price_modelling_command,
+                               task_id='price_modelling',
+                               params=default_args,
+                               dag=dag)
+db_price_forecast = DummyOperator(task_id='db_price_forecast', dag=dag)
 
 # Sent email
 # --------------------
@@ -173,8 +180,8 @@ data_harmonisation.set_upstream(db_commodity_tagging)
 
 db_data_harmonisation.set_upstream(data_harmonisation)
 
-price_model.set_upstream(db_raw_price)
-price_model.set_upstream(db_data_harmonisation)
-db_price_model.set_upstream(price_model)
+price_modelling.set_upstream(db_raw_price)
+price_modelling.set_upstream(db_data_harmonisation)
+db_price_forecast.set_upstream(price_modelling)
 
 # send_success_email.set_upstream(db_price_model)
