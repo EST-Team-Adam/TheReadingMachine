@@ -39,9 +39,9 @@ class SanitizeArticlePipeline(object):
         return len(word) > 2 and word not in self.stop_words
 
     def _sanitize_article(self, article):
-        return(article.replace('\r', ' ').replace('\n', ' ')\
-            .replace('\\r', ' ').replace('\\n', ' ')\
-            .replace('\t', ' ').replace('\\"','').replace('"',''))
+        return(article.replace('\r', ' ').replace('\n', ' ')
+               .replace('\\r', ' ').replace('\\n', ' ')
+               .replace('\t', ' ').replace('\\"', '').replace('"', ''))
 
     def process_item(self, item, spider):
         item['title'] = item['title'].encode('utf-8', 'ignore')
@@ -49,12 +49,13 @@ class SanitizeArticlePipeline(object):
             raise DropItem("Invalid Item in %s" % item)
         if 'article' in dict(item):
             sanitized_article = " ".join(
-                    [x for x in item['article'] if self._check_stop_words(x)])
+                [x for x in item['article'] if self._check_stop_words(x)])
             sanitized_article = self._sanitize_article(sanitized_article)
             try:
                 sanitized_article = sanitized_article.encode('utf-8', 'ignore')
             except UnicodeDecodeError:
-                sanitized_article = sanitized_article.decode('unicode_escape').encode('utf-8', 'ignore')
+                sanitized_article = sanitized_article.decode(
+                    'unicode_escape').encode('utf-8', 'ignore')
             item['article'] = sanitized_article
         if len(item['date']) == 0:
             raise DropItem("Empty Date in %s" % item)
@@ -72,18 +73,18 @@ class AmisJsonPipeline(object):
     def open_spider(self, spider):
         if spider.name not in self.datafiles.keys():
             self.datafiles[spider.name] = open(data_dir + '/blog_articles_{0}_{1}.jsonl'.format(
-                time.strftime("%d_%m_%Y"), spider.name), 'a')#, 0)
+                time.strftime("%d_%m_%Y"), spider.name), 'a')  # , 0)
         self.lock = threading.Lock()
 
     def process_item(self, item, spider):
-        spider.logger.info("Processing Item: " + item['title'])
+        # spider.logger.info("Processing Item: " + item['title'])
         self.lock.acquire()
         try:
             item_dict = dict(item)
             item_dict['source'] = spider.name
             line = json.dumps(item_dict, ensure_ascii=False) + "\n"
             self.datafiles[spider.name].write(line)
-            spider.logger.info("Written Item: " + item['title'])
+            # spider.logger.info("Written Item: " + item['title'])
         except (UnicodeDecodeError, UnicodeEncodeError):
             raise DropItem("Formatting Error in %s" % item)
         self.lock.release()
