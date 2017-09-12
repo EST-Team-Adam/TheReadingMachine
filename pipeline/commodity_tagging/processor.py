@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 
 # Configuration
 data_dir = os.environ['DATA_DIR']
-source_data_table = 'RawArticle'
+source_data_table = 'ProcessedArticle'
 target_data_table = 'CommodityTaggedArticle'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 sql_query = 'SELECT * FROM {}'.format(source_data_table)
