@@ -64,7 +64,7 @@ def transform_harmonised_data(data, forecast_period, topic_variables,
     non_commodity_tag_columns = [i
                                  for i in data.columns
                                  if 'contain' not in i]
-    transformed_data = data[non_commodity_tag_columns]
+    transformed_data = data.copy()[non_commodity_tag_columns]
     transformed_data[response_variable] = (
         transformed_data['GOI'].shift(-forecast_period))
 
