@@ -35,10 +35,8 @@ dag = DAG('the_reading_machine',
 
 # Article scrapping
 # --------------------
-article_scraper_script_path = os.path.join(
-    process_directory, 'article_scraper/processor.py')
-article_scraper_command = 'python {}'.format(
-    article_scraper_script_path)
+scraper_dir = os.path.join(process_directory, 'article_scraper')
+article_scraper_command = 'cd {}; python processor.py'.format(scraper_dir)
 article_scraper = BashOperator(bash_command=article_scraper_command,
                                task_id='article_scraper',
                                params=default_args,
