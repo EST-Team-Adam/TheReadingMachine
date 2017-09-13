@@ -3,7 +3,8 @@
 *#*
 *.DS_Store
 *.Rhistory
-
+*.log
+*.pdf
 
 # Data files and db
 *.pkl
@@ -25,4 +26,4 @@ data/sentiment/
 data/taggers/
 data/tokenizers/
 data/credentials.txt
-*.pdf
+
