@@ -1,37 +1,24 @@
 import pandas as pd
 import numpy as np
 import scipy as sp
-import nltk
-import string
-import Stemmer
-import matplotlib as mpl
-mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
-from sklearn.feature_extraction import text
 from scipy.cluster.hierarchy import fcluster
-
-
-class StemmedTfidfVectorizer(TfidfVectorizer):
-    def build_analyzer(self):
-        analyzer = super(TfidfVectorizer, self).build_analyzer()
-        english_stemmer = Stemmer.Stemmer('en')
-        return lambda doc: english_stemmer.stemWords(analyzer(doc))
 
 
 class TopicModel(object):
 
-    """
+    '''
     Main interface to a Topic Model Object
-    """
+    '''
 
     def __init__(self,
                  n_features=10000,
-                 n_topics=100, 
+                 n_topics=100,
                  remove_nouns=False):
-        """
+        '''
         Create a new Topic Model.
 
         Parameters
@@ -41,7 +28,7 @@ class TopicModel(object):
         Returns
         -------
         self : initialized topic model object
-        """
+        '''
         self.nmf_topics = None
         self.nmf_labels = None
         self.tf = None
@@ -51,21 +38,24 @@ class TopicModel(object):
         self.n_topics = n_topics
         self.linkage_matrix = None
         self.remove_nouns = remove_nouns
-    
-    
 
     def featurize(self, corpus):
-        """
+        '''
 
-        """
-        
-        self.corpus = corpus.apply(lambda x: preprocessor(x.decode('utf-8'), self.remove_nouns))
-        self.tf_vectorizer = StemmedTfidfVectorizer(max_df=.95, min_df=2, stop_words='english', analyzer='word', 
-                                       ngram_range=(1,1), max_features=self.n_features)
+        '''
+
+        self.corpus = corpus
+        self.tf_vectorizer = TfidfVectorizer(max_df=0.95,
+                                             min_df=2,
+                                             stop_words='english',
+                                             analyzer='word',
+                                             ngram_range=(1, 1),
+                                             max_features=self.n_features)
         self.tf = self.tf_vectorizer.fit_transform(self.corpus)
         self.tf_feature_names = self.tf_vectorizer.get_feature_names()
         self.tf_freqs = [(word, self.tf.getcol(idx).sum())
-                         for word, idx in self.tf_vectorizer.vocabulary_.items()]
+                         for word, idx
+                         in self.tf_vectorizer.vocabulary_.items()]
         self.tf_freqs = pd.DataFrame(self.tf_freqs, columns=('word', 'freq'))
 
     def fit(self, alpha=0, l1=0, n_topics=None):
@@ -98,13 +88,13 @@ class TopicModel(object):
             index=self.corpus.index)
 
         for topic_idx, topic in enumerate(self.nmf[k].components_):
-            # print("Topic #%d: " % topic_idx + "
-            # ".join([self.tf_feature_names[i] for i in
+            # print('Topic #%d: ' % topic_idx + '
+            # '.join([self.tf_feature_names[i] for i in
             # topic.argsort()[:-51:-1]]))
-            self.nmf_topics.append("Topic #%d: " % topic_idx + " ".join(
+            self.nmf_topics.append('Topic #%d: ' % topic_idx + ' '.join(
                 [self.tf_feature_names[i] for i in topic.argsort()[:-11:-1]]))
             self.nmf_labels.append(
-                " ".join([self.tf_feature_names[x]
+                '_'.join([self.tf_feature_names[x]
                           for x in topic.argsort()[-3:]]))
 
         self.nmf_labels = np.asarray(self.nmf_labels)
@@ -137,11 +127,12 @@ class TopicModel(object):
         if plot:
             fig, ax = plt.subplots(figsize=(10, 60))  # set size
             ax = sp.cluster.hierarchy.dendrogram(self.linkage_matrix,
-                                                 orientation="left",
+                                                 orientation='left',
                                                  labels=np.array(
                                                      self.nmf_labels),
                                                  leaf_font_size=16)
-            # plt.tick_params(axis= 'x', which='both', bottom='off', top='off', labelbottom='off')
+            # plt.tick_params(axis= 'x', which='both', bottom='off', top='off',
+            # labelbottom='off')
             plt.tight_layout()
             if save_fig:
                 # save figure as ward_clusters
@@ -154,30 +145,14 @@ class TopicModel(object):
 
         self.cluster_assignments = sp.cluster.hierarchy.fcluster(
             self.linkage_matrix, t=t)
-        print "{0} clusters".format(self.cluster_assignments.max())
+        print '{0} clusters'.format(self.cluster_assignments.max())
 
         # maybe use the mean here?
         self.clustered_topics = self.nmf_documents_topics.apply(
             lambda x: x.groupby(self.cluster_assignments).mean(), axis=1)
-        
-def remove_propers_POS(s):
-    tagged = nltk.pos_tag(nltk.word_tokenize(s))  # use NLTK's part of speech tagger
-    non_propernouns = [word for word,
-                       pos in tagged if pos != 'NNP' and pos != 'NNPS']
-    return ''.join([n + " " for n in non_propernouns])
-
-def preprocessor(s, remove_nouns=False):
-    if remove_nouns:
-        s = remove_propers_POS(s)
-    # remove numericals and punctuation
-    s = "".join(
-        [c if c not in string.punctuation else ' '
-         for c in s if not c.isdigit()])
-    s = s.lower()
-    return s
 
 
-def model_article_topic(articles):
+def model_article_topic(articles, article_col='article', id_col='id'):
     '''Wrapper function to create a Topic Model instance, default
     n_features = 10000, n_topics = 100.
     '''
@@ -185,7 +160,7 @@ def model_article_topic(articles):
     model = TopicModel()
 
     # Featurize the corpus and fit the model
-    model.featurize(articles['article'])
+    model.featurize(articles[article_col])
     model.fit()
 
     # Extract the topics, defaulst to 100 topics
@@ -198,11 +173,13 @@ def model_article_topic(articles):
     cluster_assignments = fcluster(model.linkage_matrix, t=1.12)
 
     # Group loadings by cluster
-    model.clustered_topics = model.nmf_documents_topics.apply(lambda x:
-                                                              x.groupby(
-                                                                  cluster_assignments).mean(),
-                                                              axis=1)
+    model.clustered_topics = (
+        model.nmf_documents_topics.apply(
+            lambda x: x.groupby(cluster_assignments).mean(),
+            axis=1)
+    )
+
     # Re-assign the id
-    model.nmf_documents_topics['id'] = articles['id']
+    model.nmf_documents_topics[id_col] = articles[id_col]
 
     return model

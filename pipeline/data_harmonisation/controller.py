@@ -1,15 +1,11 @@
 from __future__ import division
 import os
 import pandas as pd
-import numpy as np
 from sqlalchemy import create_engine
 from datetime import datetime
-from datetime import timedelta
 
-# NOTE (Michael): We will use the no pos table for now.
-topicModelTable = 'NoposTopicModel'
+topicModelTable = 'TopicModel'
 model_start_date = datetime(2010, 1, 1).date()
-forecast_period = 90
 
 
 def get_igc_price(response=None):
@@ -39,14 +35,6 @@ def get_topic_modelled_article():
         'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
     topic_modelled_article = pd.read_sql(
         'SELECT * FROM {}'.format(topicModelTable), engine)
-
-    # Rename the columns
-    #
-    # NOTE (Michael): This step should be performed in TopicModel.
-    new_names = {n: n.replace(' ', '_')
-                 for n in topic_modelled_article.columns}
-    topic_modelled_article.rename(columns=new_names, inplace=True)
-
     return topic_modelled_article
 
 
@@ -59,29 +47,38 @@ def get_commodity_tagged_article():
     return commodity_tagged_article
 
 
-def compute_topic_score(sentiment, topic, id_col='id'):
+def compute_topic_score(pos_sentiment_col, neg_sentiment_col, topic,
+                        id_col='id'):
     original_id = topic[id_col]
-    scored_topic = topic.drop(id_col, axis=1).apply(lambda x: x * sentiment)
+    # scored_topic = topic.drop(id_col, axis=1).apply(lambda x: x * sentiment)
+    pos_scored_topic = topic.drop(id_col, axis=1).apply(
+        lambda x: x * pos_sentiment_col)
+    new_pos_names = {n: n + '_pos'
+                     for n in topic.columns}
+    pos_scored_topic.rename(columns=new_pos_names, inplace=True)
+    neg_scored_topic = topic.drop(id_col, axis=1).apply(
+        lambda x: x * -neg_sentiment_col)
+    new_neg_names = {n: n + '_neg'
+                     for n in topic.columns}
+    neg_scored_topic.rename(columns=new_neg_names, inplace=True)
+    scored_topic = pd.concat([pos_scored_topic, neg_scored_topic], axis=1)
+
     # TODO (Michael): Need to think how to normalise.
     scored_topic[id_col] = original_id
     return scored_topic
 
 
-def harmonise_article(sentiment_col='compound_sentiment',
+def harmonise_article(pos_sentiment_col='positive_sentiment',
+                      neg_sentiment_col='negative_sentiment',
                       id_col='id', date_col='date'):
 
     sentiment_scored_article = get_sentiment_scored_article()
     topic_modelled_article = get_topic_modelled_article()
     igc_price = get_igc_price(response='GOI')
-    max_article_date = sentiment_scored_article['date'].max()
-    igc_price['SGOI'] = (pd.concat([igc_price['GOI'][forecast_period:],
-                                    pd.Series(np.nan * forecast_period)],
-                                   axis=0)
-                         .reset_index(drop=True))
 
-    model_price = igc_price[(igc_price['date'] >= model_start_date
-                             + timedelta(days=forecast_period))
-                            & (igc_price['date'] <= max_article_date)]
+    article_max_date = sentiment_scored_article[date_col].max()
+    model_price = igc_price[(igc_price[date_col] >= model_start_date) &
+                            (igc_price[date_col] <= article_max_date)]
 
     # HACK (Michael): There is an increase trend in the size of the
     #                 value in the topic. In order to eliminate this
@@ -99,14 +96,11 @@ def harmonise_article(sentiment_col='compound_sentiment',
     #                 the sum is 0. Since the division of 0 is NaN we
     #                 replace it with 0.
 
-    scaled_topic = (topic_modelled_article.drop(id_col, axis=1)
-                    .apply(lambda x: x / sum(x), axis=1)
-                    .fillna(0))
-    scaled_topic[id_col] = topic_modelled_article[id_col]
     commodity_tagged_article = get_commodity_tagged_article()
     scored_topic = compute_topic_score(
-        sentiment_scored_article[sentiment_col], scaled_topic,
-        id_col)
+        pos_sentiment_col=sentiment_scored_article[pos_sentiment_col],
+        neg_sentiment_col=sentiment_scored_article[neg_sentiment_col],
+        topic=topic_modelled_article, id_col=id_col)
 
     processed_article_list = [scored_topic, commodity_tagged_article]
 
@@ -120,13 +114,14 @@ def harmonise_article(sentiment_col='compound_sentiment',
                           .drop('id', axis=1)
                           .groupby('date')
                           .mean()
+                          .apply(lambda x: (x - x.mean()) / x.std(), axis=0)
                           .reset_index())
 
     # NOTE (Michael): dates without sentiments and topic are filled
     #                 with NA assuming there are no information
     #                 available.
     harmonised_data = (pd.merge(model_price, aggregated_article,
-                                on='date', how='inner')
+                                on='date', how='left')
                        .fillna(0))
 
     return harmonised_data
