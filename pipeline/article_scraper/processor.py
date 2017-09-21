@@ -1,7 +1,7 @@
 import controller as ctr
 
 # 'bloomberg' removed temporarily.
-spiders = ['noggers', 'worldgrain', 'euractiv', 'agrimoney']
+spiders = ['worldgrain', 'euractiv', 'agrimoney']
 ctr.scrap_articles(spiders)
 
 # Save output file
