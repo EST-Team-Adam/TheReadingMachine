@@ -72,7 +72,8 @@ class BloombergSpider(CrawlSpider):
 class NoggersBlogSpider(CrawlSpider):
     name = 'noggers'
     allowed_domains = ["nogger-noggersblog.blogspot.com",
-                       "nogger-noggersblog.blogspot.co.id"]
+                       "nogger-noggersblog.blogspot.co.id",
+                       "nogger-noggersblog.blogspot.ch"]
     start_urls = ["http://nogger-noggersblog.blogspot.com/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
