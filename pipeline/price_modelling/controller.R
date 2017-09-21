@@ -20,7 +20,7 @@ transformHarmonisedData = function(harmonisedData, forecastPeriod,
         ##                 tagged and thus they are identical
         ##                 variables. This results in unreliable
         ##                 prediction.
-        subset(., select = -c(grep("contain", colnames(.)))) %>%
+        subset(., select = -contains("contain")) %>%
         mutate(response = lead(GOI, forecastPeriod))
 
     ## Perform decay
