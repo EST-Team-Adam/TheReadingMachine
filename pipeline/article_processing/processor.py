@@ -20,7 +20,7 @@ remove_captalisation = True
 remove_noun = True
 remove_numerical = True
 remove_punctuation = True
-stem = True
+stem = False
 
 
 # Reading data
