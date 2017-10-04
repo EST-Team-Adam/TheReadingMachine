@@ -25,7 +25,9 @@ irrelevant_link = ['https://www.euractiv.com/topics/news/?type_filter=video',
                    'http://www.euractiv.com/news/']
 
 
-def scraper_post_processing(raw_articles, model_start_date):
+def scraper_post_processing(raw_articles, model_start_date, id_col='id',
+                            article_col='article', title_col='title',
+                            link_col='link', date_col='date'):
     '''Perform post processing of articles scrapped by the scrapper.
 
     There have been a few issues identified regarding the
@@ -36,23 +38,23 @@ def scraper_post_processing(raw_articles, model_start_date):
     '''
 
     # If an ID has already been created, then we drop it.
-    if 'id' in raw_articles.columns:
-        processed_articles = raw_articles.drop('id', 1)
+    if id_col in raw_articles.columns:
+        raw_articles = raw_articles.drop(id_col, 1)
 
     # Drop duplciates based on article content
-    processed_articles = (processed_articles
-                          .drop_duplicates(subset='article'))
+    processed_articles = (raw_articles
+                          .drop_duplicates(subset=article_col))
 
     # Remvoe entries that are associated with maintenance or service.
-    processed_articles = processed_articles[~processed_articles['title'].isin(
+    processed_articles = processed_articles[~processed_articles[title_col].isin(
         maintenance_title)]
 
     # Remoe links that are not associated with news articles.
-    processed_articles = processed_articles[~processed_articles['link'].isin(
+    processed_articles = processed_articles[~processed_articles[link_col].isin(
         irrelevant_link)]
 
     # Subset the data only after the model_start_date
-    processed_articles = processed_articles[processed_articles['date']
+    processed_articles = processed_articles[processed_articles[date_col]
                                             > model_start_date]
 
     return processed_articles
@@ -154,7 +156,7 @@ def article_summariser(article_list):
 def text_preprocessing(article_df, article_col, min_length,
                        remove_captalisation=True, remove_noun=False,
                        remove_numerical=True, remove_punctuation=True,
-                       stem=False):
+                       stem=False, date_col='date'):
     '''Process the text extracted from the scrapper.
 
     In addition, articles with tokens less than the min_length
@@ -190,7 +192,7 @@ def text_preprocessing(article_df, article_col, min_length,
                                           for tt in min_length_tokens]
 
     # Recreate the index
-    exclude_min_length_df.sort_values(['date'], ascending=[1], inplace=True)
+    exclude_min_length_df.sort_values([date_col], ascending=[1], inplace=True)
     exclude_min_length_df['id'] = range(1, exclude_min_length_df.shape[0] + 1)
 
     return exclude_min_length_df, summary

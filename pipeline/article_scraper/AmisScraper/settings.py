@@ -15,12 +15,13 @@ SPIDER_MODULES = ['AmisScraper.spiders']
 NEWSPIDER_MODULE = 'AmisScraper.spiders'
 
 
-#LOG_STDOUT = True
-#LOG_FILE = 'scrapy_output.log'
+LOG_STDOUT = True
+LOG_FILE = 'scrapy_output.log'
 
 
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'amisSpider (+http://www.yourdomain.com)'
+# Crawl responsibly by identifying yourself (and your website) on the
+# user-agent
+# USER_AGENT = 'amisSpider (+http://www.yourdomain.com)'
 USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0"
 
 

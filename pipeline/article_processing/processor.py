@@ -20,7 +20,7 @@ remove_captalisation = True
 remove_noun = True
 remove_numerical = True
 remove_punctuation = True
-stem = True
+stem = False
 
 
 # Reading data
@@ -29,13 +29,6 @@ articles = pd.read_sql(sql_query, engine, parse_dates=['date'])
 # Post processing the data extraction
 processed_articles = ctr.scraper_post_processing(
     articles, model_start_date=model_start_date)
-
-# HACK (Michael): To test the model, I have taken only data from
-#                 'agrimoney' and 'euractive' as they go beyond
-#                 2010. This is required to learn the increase in
-#                 price.
-processed_articles = processed_articles[processed_articles['source'].isin(
-    ['agrimoney', 'euractiv'])]
 
 # Process the texts
 preprocessed_text, text_summary = (

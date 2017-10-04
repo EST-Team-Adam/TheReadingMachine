@@ -3,24 +3,11 @@ library(dplyr)
 library(forecast)
 library(reshape2)
 library(ggplot2)
+library(glmnet)
 source("controller.R")
 
 ########################################################################
 ## Initialisation
-########################################################################
-
-## HACK (Michael): This first date is due to the fact that sentiment
-##                 score were vastly different prior and after
-##                 2013. Prior to 2013, the sentiment has mean clsoe
-##                 to 0, while after 2013, the mean of sentiments has
-##                 risen to approximately 0.25.
-firstStartDate = as.Date("2013-01-01")
-endDate = as.Date("2016-04-18")
-target = "IGC.GOI"
-forecastPeriod = 90
-
-########################################################################
-## Read the data
 ########################################################################
 
 ## connect to the sqlite file
@@ -28,84 +15,57 @@ dataDir = Sys.getenv("DATA_DIR")
 dbName = "/the_reading_machine.db"
 fullDbPath = paste0(dataDir, dbName)
 con = dbConnect(drv=SQLite(), dbname=fullDbPath)
-
-
-harmonisedData =
-    getHarmonisedData() %>%
-    ## HACK (Michael): This is temporary as there is some problem with
-    ##                 commodity tagging. All the commodity are not
-    ##                 tagged and thus they are identical
-    ##                 variables. This results in unreliable
-    ##                 prediction.
-    subset(., select = -c(grep("contain", colnames(.))))
 topicVariables = getTopicVariables()
+
+## initial parameters
+forecastPeriod = 180
+holdoutPeriod = 2
+filterCoef = 1
+regularisation = "lambda.min"
+responseVariable = "response"
+sampleRate = 10/length(topicVariables)
+bootstrapIteration = 50
+alpha = 1
+
+
+########################################################################
+## Data Extraction and processing
+########################################################################
+
+## Get raw data
 priceData = getPriceData()
-
-########################################################################
-## Transform the data for modelling
-########################################################################
-
-transformedData = transformHarmonisedData(harmonisedData)
-aggregatedData = dailyAggregation(transformedData) %>%
-    subset(., subset = date > firstStartDate)
-responseData = transformPriceData(priceData, forecastPeriod = forecastPeriod,
-                                  targetVariable = target)
-
-
-for(i in topicVariables){
-    aggregatedData[i] = cumsum(scale(aggregatedData[i]))
-}
-
-
-########################################################################
-## Create the final model data
-########################################################################
-
 complete.df =
-    createModelData(responseData = responseData, explainData = aggregatedData)
+    getHarmonisedData() %>%
+    transformHarmonisedData(., forecastPeriod = forecastPeriod,
+                            filterCoef = filterCoef, topicVariables = topicVariables)
+
+## Create train and test set
+datasets = buildDatasets(completeData = complete.df,
+                         forecastPeriod = forecastPeriod,
+                         holdoutPeriod = holdoutPeriod)
 
 
 
 ########################################################################
-## Model to select best model
+## Model training and prediction
 ########################################################################
 
 
-bestModelName = mlrModelSelector(data = complete.df,
-                                 testPeriod = 180,
-                                 models =  c("regr.lm", "regr.glmnet", "regr.cvglmnet"))
+## Train the model and make prediction
+model = with(datasets,
+             trainBagElasticnet(trainData = trainData,
+                                testData = testData,
+                                predictionData = predictionData,
+                                modelVariables = topicVariables,
+                                responseVariable = "response",
+                                sampleRate = sampleRate,
+                                bootstrapIteration = bootstrapIteration,
+                                smoothPrediction = TRUE,
+                                forecastPeriod = forecastPeriod,
+                                alpha = alpha,
+                                s = regularisation))
 
-
-## bestModelName = "regr.glmnet"
-
-########################################################################
-## Prediction
-########################################################################
-
-## Re-fit full data with best model
-bestLearner = makeLearner(bestModelName)
-task = makeRegrTask(data = complete.df, id = "prediction", target = "response")
-bestModel = train(bestLearner, task = task)
-
-
-prediction.df = 
-    aggregatedData %>%
-    subset(., select = -date) %>%
-    ## subset(., select = grep("wheat", colnames(.), value = TRUE)) %>%
-    ## mutate(date = as.numeric(date)) %>%
-    predict(bestModel, newdata = .) %>%
-    `$`(data) %>%
-    cbind(date = aggregatedData$date, .) %>%
-    mutate(date = date + forecastPeriod) %>%
-    mutate(prediction = lowess(date, response, f = 90/length(response))$y) %>%
-    subset(., select = -response) %>%
-    ## mutate(smootehdPrediction = lowess(date, prediction, f = 90/length(prediction))$y) %>%
-    merge(., priceData, all.y = TRUE, by = "date") %>%
-    ## rename(prediction = response) %>%
-    melt(., id.var = "date")
-
-ggplot(data = prediction.df, aes(x = date, y = value, col = variable)) +
-    geom_line()
-
-getSortedCoef(bestModel)
-
+## Plot the prediction
+plotPrediction(completePrediction = model$prediction,
+               priceData = priceData[, c("date", "GOI")],
+               cutoffDate = datasets$cutoffDate)
