@@ -1,0 +1,328 @@
+---
+title: "Article Quality Assessment"
+output: html_document
+---
+
+```{r, settings, echo=FALSE}
+knitr::opts_chunk$set(cache=FALSE, warning=FALSE,
+    message=FALSE, fig.align='center', fig.width=10)
+```
+
+```{r, load_library}
+library(RSQLite)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+
+checkDuplicate = function(rawArticle, dataSource){
+    sub = 
+        rawArticle %>%
+        subset(., source == dataSource)
+
+    duplicateCount =
+        sub %>%
+        group_by(title) %>%
+        summarise(count = n()) %>%
+        arrange(., desc(count))
+    
+    cat("Data source: ", dataSource, "\n")
+    cat("Total number of entry: ", NROW(sub), "\n")
+    cat("Unique Titles: ", length(unique(sub$title)), "\n")
+    cat("Most duplicated title is: '", unlist(duplicateCount[1, "title"]), "'\n", sep = "")
+    cat("Duplicate count summary:\n")
+    print(summary(duplicateCount$count))
+    cat("\n")
+}
+
+getDuplicated = function(rawArticle, dataSource, n = 1){
+
+    sub = 
+        rawArticle %>%
+        subset(., source == dataSource)
+
+    duplicateCount =
+        sub %>%
+        group_by(title) %>%
+        summarise(count = n()) %>%
+        arrange(., desc(count))
+
+    
+    sub %>%
+        subset(., title == unlist(duplicateCount[n, "title"]))
+}
+
+```
+
+
+```{r, load_data}
+dataDir = Sys.getenv("DATA_DIR")
+dbName = "/the_reading_machine.db"
+fullDbPath = paste0(dataDir, dbName)
+con = dbConnect(drv=SQLite(), dbname=fullDbPath)
+statement = paste0('SELECT * FROM RawArticle')
+rawArticles =
+    dbGetQuery(con, statement) %>%
+    mutate(date = as.Date(date, format="%Y-%m-%d"))
+```
+
+There are a few observations we can make in the following graph. First
+of all, we can see that the Bloomberg data does not start until the
+end of 2011. Further, the number of articles remain low prior to early
+2012. This is an indication of a problem with the scraper unable to
+trace back to articles prior to 2011. This
+[article](https://www.bloomberg.com/news/articles/2004-04-18/separating-the-wheat-from-the-chaff)
+is from 2004 and has the exact same link structure as one in recent
+year was not scrapped. Further investigation is required and
+improvements to the scraper is required.
+
+Secondly, We can see that the number of articles from World Grain is
+relatively higher but the frequency of publication is significantly
+lower. 
+
+```{r, aggregated_article_count}
+aggregatedCount =
+    rawArticles %>%
+    group_by(date, source) %>%
+    summarise(count = n())
+
+ggplot(data = aggregatedCount, aes(x = date, y = count)) +
+    geom_line() +
+    facet_wrap(~source)
+```
+
+If we look on the log scale, the number of Bloomberg article also
+increased considerably in 2016 which also happened to be the latest
+year. In contrast, both Euractive and Agrimoney increase either
+steadily or remained constant. This suggests there may be some issues
+in going back in time for Bloomberg articles.
+
+```{r}
+ggplot(data = aggregatedCount, aes(x = date, y = count)) +
+    geom_line() +
+    facet_wrap(~source) +
+    scale_y_log10() +
+    geom_smooth()
+```
+
+
+
+A quick inspection of the World Grain data reveals that all the
+articles occur on the first day of the month. After inspecting the
+scraper, it is apparent that the date were parsed according to the
+link of article. However, the link contains only year and month
+information. Thus, we will need to parse the date differently for
+World Grain.
+
+```{r}
+aggregatedCount %>%
+    subset(., source == "worldgrain") %>%
+    data.frame
+```
+
+## Duplicates
+
+One of the issues identified earlier in the project was the
+duplication of the articles. Below is a small summary of the
+duplication for each data source.
+
+```{r}
+for(i in unique(rawArticles$source)){
+    checkDuplicate(rawArticles, i)
+}
+```
+
+The reason for each source differs and require different solution for
+each problem.
+
+### Bloomberg
+
+Although Bloomberg has a low level of duplication, it seems that the
+title or the link is extracted incorrectly in certain cases.
+
+Take the following example, the title for all the articles below are
+'Bloomberg' which is evidently incorrect.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "bloomberg", n = 1) %>%
+    select(., c(link, title))
+```
+
+
+This second example also shows the same problem where the title is
+duplicated and on of them is incorrect. Further, the `http` and
+`https` address are treated differently where they should be the same.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "bloomberg", n = 2) %>%
+    select(., c(link, title))
+```
+
+
+### Agrimoney
+
+Similar to Bloomberg, the number of duplicated article is also
+low. The most 2 common problem with Agrimoney is that maintenance and
+service page are being scrapped.
+
+The most common problem is the reduced service information page.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "agrimoney", n = 1) %>%
+    select(., c(link, title))
+```
+
+Followed by maintenance information page.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "agrimoney", n = 2) %>%
+    select(., c(link, title))
+```
+
+These entries should be eliminated or ignored. Links ending with
+`reduced-service-at-agrimoney.com` or
+`apology-to-agrimoney.com-subscribers` should be skipped.
+
+
+In addition, same article can be featured in different section as
+demonstrated in the following example.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "agrimoney", n = 4) %>%
+    select(., c(link, title))
+```
+
+We also need to account for this when scrapping from Agrimoney.
+
+
+### Euractive
+
+In contrast to the low level of duplicate of Bloomberg and Agrimoney,
+Euractive has more than 50% of articles duplciated. 
+
+First of all, entry with the title `News – EurActiv.com` are not
+actual entries and analysis of the scrapper should be conducted to
+identify why these links are extracted.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "euractiv", n = 1) %>%
+    select(., c(link, title))
+```
+
+The second type of problem is also identified above with no
+distinction between the `http` and `https` version of the
+website. Further, there seem to be odd suffix at the end of the link
+which refers to the same article.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "euractiv", n = 2) %>%
+    select(., c(link, title))
+```
+
+Finally, again, we need to account for news articles appearing in
+different section.
+
+```{r}
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "euractiv", n = 3) %>%
+    select(., c(link, title))
+```
+
+
+
+### World Grain
+
+Finally, we investigate the World Grain data. Despite the huge number
+of duplication, the source came mainly from two issues.
+
+First, the website supports mobile viewing. Thus, they were also
+scrapped and indistinguished like the `http/s` problem. Further, World
+Grain has articles spanning multiple page which has multiple
+links. Thus, entries although refer to parts of the article are
+treated separate entries by the scrapper.
+
+The question regarding the multi-page issue depends on the type of
+model we will be dealing with and can be either left alone or require
+merging of the articles.
+
+```
+rawArticles %>%
+    getDuplicated(rawArticle = ., dataSource = "worldgrain", n = 1) %>%
+    select(., c(link, title))
+```
+
+Nonetheless, the issue of duplication is a minor one as
+post-processing can help eliminate all the issues identified.
+
+
+## Length of Articles
+
+Below we show the length of the article for each soruce. It seems that
+Bloomber and Euroactiv has some text that is extremely long.
+
+```{r}
+wordCount = 
+    rawArticles %>%
+    mutate(wordCount = str_count(article, "[[:alpha:]]+"))
+
+
+wordCount %>%
+    ggplot(data = ., aes(factor(source), wordCount)) +
+    geom_violin()
+```
+
+
+A investigation reveals that the longest article is actually not an
+article, rather a live feed. The long articles from Bloomberg are
+meeting minutes and transcripts. This might be a piece of information
+that might be useful in the modelling.
+
+```{r}
+wordCount %>%
+    arrange(., desc(wordCount)) %>%
+    select(., title) %>%
+    unique %>%
+    head(., 10)
+```
+
+## Productionise
+
+In order for the scraper to be properly integrated and sustainable,
+there are several changes to that needs to be put in place.
+
+First of all, we need to research on a method to only search for
+recent text on text that has not been extracted. The scraper currently
+takes a few hours to execute and the duration will continue to
+increase over time. Thus, it is desirable to reduce the run time and
+redudancy of the scraper.
+
+
+Currently the data is saved as a `jsonl` file. We should load this
+into a database directly for future use.
+
+
+
+## List of TODOs
+
+P0:
+
+* Parse the data differently for World Grain
+
+P1:
+
+* Investigate the Bloomberg scraper and identify the problem
+* Scrap data for Bloomberg prior to 2012.
+* Upon finishing the updates, integrate the scraper into the pipeline.
+
+P3:
+
+* Treat `http` and `https` equally.
+* Remove the maintenance and service page of Agrimoney
+* Skip same article from different news section.
+* Account for mobile version of the website.
