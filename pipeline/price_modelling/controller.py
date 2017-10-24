@@ -117,7 +117,7 @@ def train_bag_elasticnet(complete_data, forecast_period, holdout_period,
         bagging_variables = np.random.choice(topic_variables, bagging_size)
         model = ElasticNetCV(n_alphas=100, l1_ratio=1,
                              tol=1e-7, max_iter=100000, cv=10,
-                             n_jobs=-1)
+                             n_jobs=-1, normalize=True)
 
         model.fit(train_data[bagging_variables],
                   train_data[response_variable])
