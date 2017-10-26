@@ -16,14 +16,17 @@ model_start_date = datetime(2010, 1, 1).date()
 # Model parameters
 feature_size = 100
 timestep_size = 90
-batch_size = 128
+batch_size = 90
 num_layer = 1
 cell_size = 128
 learning_rate = 0.0005
-epochs = 300
+epochs = 1
 keep_prob = 0.8
 clipping_cap = 1.0
-training_pct = 0.85
+
+# This is because the model needs timestep ahead data to make the first
+# forecast.
+rnn_start_date = model_start_date - timedelta(days=timestep_size)
 
 
 def get_sentiment_scored_article():
@@ -83,7 +86,7 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
     igc_price = ctr.get_igc_price(response='GOI')
 
     article_max_date = sentiment_scored_article[date_col].max()
-    model_price = igc_price[(igc_price[date_col] >= model_start_date) &
+    model_price = igc_price[(igc_price[date_col] >= rnn_start_date) &
                             (igc_price[date_col] <= article_max_date)]
 
     # commodity_tagged_article = get_commodity_tagged_article()
@@ -147,7 +150,7 @@ class SentimentRnn:
 
     def __init__(self, data, response_col, denormaliser,
                  forecast_period, feature_size, timestep_size, batch_size,
-                 num_layer, cell_size, learning_rate, training_pct, epochs,
+                 num_layer, cell_size, learning_rate, holdout_period, epochs,
                  keep_prob, clipping_cap, log_dir, model_name=None):
 
         self.data = data.copy()
@@ -163,7 +166,7 @@ class SentimentRnn:
         self.epochs = epochs
         self.keep_prob = keep_prob
         self.clipping_cap = clipping_cap
-        self.training_pct = training_pct
+        self.holdout_period = holdout_period
         self.log_dir = log_dir
 
         # Build the graph
@@ -186,9 +189,8 @@ class SentimentRnn:
         '''
         prediction_set = self.data[self.data[self.response_col].isnull()]
         working_set = self.data[self.data[self.response_col].notnull()]
-        training_size = int(len(self.data) * self.training_pct)
-        training_set = working_set[:training_size]
-        valid_set = working_set[training_size:]
+        training_set = working_set[:-self.holdout_period]
+        valid_set = working_set[-self.holdout_period:]
         return training_set, valid_set, prediction_set
 
     def create_sample_generator(self, input_data, batch_size):
@@ -199,7 +201,7 @@ class SentimentRnn:
         target_serie = np.array(input_data[self.response_col])
         inputs_matrix = np.array(input_data.drop(self.response_col, axis=1))
         series_length = len(target_serie)
-        num_slide = series_length - self.timestep_size - self.forecast_period + 1
+        num_slide = series_length - self.timestep_size + 1
         truncated_num_slide = (num_slide / batch_size) * batch_size
         num_batch = truncated_num_slide / batch_size
 
@@ -208,8 +210,7 @@ class SentimentRnn:
         for slide in range(truncated_num_slide):
             slide_end = slide + self.timestep_size
             input_list[slide] = np.array(inputs_matrix[slide:slide_end, :])
-            target_list[slide] = target_serie[slide_end +
-                                              self.forecast_period - 1]
+            target_list[slide] = target_serie[slide_end - 1]
 
         batch_input = np.split(np.stack(input_list), num_batch)
         batch_target = np.split(
@@ -341,7 +342,6 @@ class SentimentRnn:
 
                 print('Epoch: {}/{} -- Train loss: {:.5f} -- Valid loss: {:.5f}'.format(
                     e + 1, self.epochs, train_loss, valid_loss))
-            # TODO (Michael): Modify this name
             self.saver.save(
                 sess, '{}/checkpoints/model.ckpt'.format(self.log_dir))
 
@@ -354,15 +354,15 @@ class SentimentRnn:
                 sess, tf.train.latest_checkpoint('{}/checkpoints'.format(self.log_dir)))
             forecast = []
             actual = []
-            # forecast_pad = pd.DataFrame(np.zeros([self.forecast_period,
-            #                                       self.feature_size + 1]),
-            #                             columns=self.data.columns)
-            # forecast_padded_data = pd.concat([self.data, forecast_pad])
+            self.forecast_pad = pd.DataFrame(np.zeros([self.forecast_period,
+                                                       self.feature_size + 1]),
+                                             columns=self.data.columns)
+            forecast_padded_data = pd.concat([self.data, self.forecast_pad])
 
-            # forecast_generator = self.create_sample_generator(
-            #     input_data=forecast_padded_data, batch_size=1)
             forecast_generator = self.create_sample_generator(
-                input_data=self.data, batch_size=1)
+                input_data=forecast_padded_data, batch_size=1)
+            # forecast_generator = self.create_sample_generator(
+            #     input_data=self.data, batch_size=1)
 
             # Lets try update the state here
             forecast_state = sess.run(self.initial_state,
@@ -375,7 +375,6 @@ class SentimentRnn:
                                self.initial_state: forecast_state,
                                self.is_training: False})
                 forecast.append(current_forecast.item())
-                actual.append(forecast_target)
 
             # Reconstruct the data and forecast
             self.rescaled_forecast = self.denormaliser(forecast)
@@ -387,11 +386,9 @@ class SentimentRnn:
                            return_sorted=False,
                            frac=float(self.forecast_period) / forecast_size))
                 .reset_index(drop=True))
-            # TODO (Michael): Need to fix the large truncation of the
-            #                 sample due to the forecast generator.
-            self.shift_days = self.timestep_size + self.forecast_period * 2
+
             complete_dates = (
-                pd.date_range(model_start_date + timedelta(days=self.shift_days),
+                pd.date_range(model_start_date,
                               periods=forecast_size)
                 .to_series().reset_index(drop=True))
 
@@ -399,7 +396,7 @@ class SentimentRnn:
                 {'date': complete_dates,
                  'prediction': smoothed_forecast,
                  'forecastPeriod': ctr.forecast_period,
-                 'model': 'bagged_elasticnet'
+                 'model': 'lstm_k_step'
                  })
 
     def plot_prediction(self, save=True):
@@ -411,11 +408,13 @@ class SentimentRnn:
         valid_end = -self.forecast_period
         plot_df = self.prediction_df[:]
         plot_df['raw_prediction'] = self.rescaled_forecast
-        plot_df['actual'] = (
+        padded_actual = (
             self.denormaliser(
-                self.data[self.response_col]
-                .iloc[self.forecast_period + self.timestep_size - 1:])
+                self.data[self.response_col])
+            .append(pd.Series([np.nan] * self.forecast_period))
             .reset_index(drop=True))
+        plot_df['actual'] = padded_actual
+
         plt.figure(figsize=(16, 9))
         plt.plot(plot_df['date'],
                  plot_df['raw_prediction'],
@@ -465,7 +464,7 @@ def output():
                          num_layer=num_layer,
                          cell_size=cell_size,
                          learning_rate=learning_rate,
-                         training_pct=training_pct,
+                         holdout_period=ctr.holdout_period,
                          epochs=epochs,
                          keep_prob=keep_prob,
                          clipping_cap=clipping_cap,
