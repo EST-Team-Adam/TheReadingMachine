@@ -13,6 +13,10 @@ engine = create_engine(
     'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 harmonised_table = 'HarmonisedData'
 
+# Model parameters
+filter_coef = 1
+bootstrapIteration = 50
+
 
 def get_harmonised_data():
     ''' Function to load the harmonised data.
@@ -139,7 +143,7 @@ def output():
         transform_harmonised_data(data=harmonised_data,
                                   forecast_period=ctr.forecast_period,
                                   topic_variables=topic_variables,
-                                  filter_coef=ctr.filter_coef,
+                                  filter_coef=filter_coef,
                                   response_variable=ctr.response_variable))
 
     # Model fitting
@@ -147,7 +151,7 @@ def output():
         train_bag_elasticnet(complete_data=transformed_data,
                              forecast_period=ctr.forecast_period,
                              holdout_period=ctr.holdout_period,
-                             bootstrapIteration=ctr.bootstrapIteration,
+                             bootstrapIteration=bootstrapIteration,
                              topic_variables=topic_variables,
                              response_variable=ctr.response_variable))
 
