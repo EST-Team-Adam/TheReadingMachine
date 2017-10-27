@@ -1,4 +1,5 @@
 import os
+import io
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -17,16 +18,17 @@ model_start_date = datetime(2010, 1, 1).date()
 feature_size = 100
 timestep_size = 90
 batch_size = 90
-num_layer = 1
+num_layer = 2
 cell_size = 128
-learning_rate = 0.0005
-epochs = 1
-keep_prob = 0.8
+learning_rate = 0.0001
+epochs = 300
+keep_prob = 0.75
 clipping_cap = 1.0
 
-# This is because the model needs timestep ahead data to make the first
-# forecast.
-rnn_start_date = model_start_date - timedelta(days=timestep_size)
+# This is because the model needs timestep and forecast period ahead
+# data to make the first forecast.
+rnn_start_date = model_start_date - \
+    timedelta(days=timestep_size + ctr.forecast_period)
 
 
 def get_sentiment_scored_article():
@@ -353,16 +355,8 @@ class SentimentRnn:
             self.saver.restore(
                 sess, tf.train.latest_checkpoint('{}/checkpoints'.format(self.log_dir)))
             forecast = []
-            actual = []
-            self.forecast_pad = pd.DataFrame(np.zeros([self.forecast_period,
-                                                       self.feature_size + 1]),
-                                             columns=self.data.columns)
-            forecast_padded_data = pd.concat([self.data, self.forecast_pad])
-
             forecast_generator = self.create_sample_generator(
-                input_data=forecast_padded_data, batch_size=1)
-            # forecast_generator = self.create_sample_generator(
-            #     input_data=self.data, batch_size=1)
+                input_data=self.data, batch_size=1)
 
             # Lets try update the state here
             forecast_state = sess.run(self.initial_state,
@@ -388,7 +382,7 @@ class SentimentRnn:
                 .reset_index(drop=True))
 
             complete_dates = (
-                pd.date_range(model_start_date,
+                pd.date_range(rnn_start_date + timedelta(self.forecast_period + self.timestep_size),
                               periods=forecast_size)
                 .to_series().reset_index(drop=True))
 
@@ -399,7 +393,7 @@ class SentimentRnn:
                  'model': 'lstm_k_step'
                  })
 
-    def plot_prediction(self, save=True):
+    def plot_prediction(self, plot_output=True):
         '''Method to plot the prediction, smoothed prediction against the
         actual values.
 
@@ -410,27 +404,27 @@ class SentimentRnn:
         plot_df['raw_prediction'] = self.rescaled_forecast
         padded_actual = (
             self.denormaliser(
-                self.data[self.response_col])
+                self.data[self.response_col].iloc[self.timestep_size:])
             .append(pd.Series([np.nan] * self.forecast_period))
             .reset_index(drop=True))
         plot_df['actual'] = padded_actual
 
-        plt.figure(figsize=(16, 9))
-        plt.plot(plot_df['date'],
-                 plot_df['raw_prediction'],
-                 label='raw prediction')
-        plt.plot(plot_df['date'],
-                 plot_df['prediction'],
-                 label='smoothed_prediction')
-        plt.plot(plot_df['date'],
-                 plot_df['actual'],
-                 label='actual', linestyle='-')
-        plt.axvline(plot_df['date'].iloc[valid_start],
-                    color='C5', linestyle='dashed')
-        plt.axvline(plot_df['date'].iloc[valid_end],
-                    color='C5', linestyle='dashed')
-        plt.legend(loc='upper left')
-        if save:
+        if plot_output == 'png':
+            plt.figure(figsize=(16, 9))
+            plt.plot(plot_df['date'],
+                     plot_df['raw_prediction'],
+                     label='raw prediction')
+            plt.plot(plot_df['date'],
+                     plot_df['prediction'],
+                     label='smoothed_prediction')
+            plt.plot(plot_df['date'],
+                     plot_df['actual'],
+                     label='actual', linestyle='-')
+            plt.axvline(plot_df['date'].iloc[valid_start],
+                        color='C5', linestyle='dashed')
+            plt.axvline(plot_df['date'].iloc[valid_end],
+                        color='C5', linestyle='dashed')
+            plt.legend(loc='upper left')
             target_path = '{}/figure/'.format(self.log_dir)
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
@@ -438,7 +432,41 @@ class SentimentRnn:
             print('saving as {}'.format(file_loc))
             plt.savefig(file_loc)
             plt.close()
+        elif plot_output == 'tensorboard':
+            plt.figure(figsize=(10, 6))
+            plt.plot(plot_df['date'],
+                     plot_df['raw_prediction'],
+                     label='raw prediction')
+            plt.plot(plot_df['date'],
+                     plot_df['prediction'],
+                     label='smoothed_prediction')
+            plt.plot(plot_df['date'],
+                     plot_df['actual'],
+                     label='actual', linestyle='-')
+            plt.axvline(plot_df['date'].iloc[valid_start],
+                        color='C5', linestyle='dashed')
+            plt.axvline(plot_df['date'].iloc[valid_end],
+                        color='C5', linestyle='dashed')
+            plt.legend(loc='upper left')
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            with tf.Session(graph=self.graph) as sess:
+                image = tf.image.decode_png(buf.getvalue(), channels=4)
+
+                # Add the batch dimension
+                image = tf.expand_dims(image, 0)
+
+                # Add image summary
+                summary_op = tf.summary.image('plot', image)
+                summary = sess.run(summary_op)
+                writer = tf.summary.FileWriter(
+                    self.log_dir + '/images/' + self.log_string)
+                writer.add_summary(summary)
+                writer.close()
+
         else:
+            plt.figure(figsize=(16, 9))
             plt.show()
 
 
@@ -471,7 +499,7 @@ def output():
                          log_dir='logs/{}'.format(date_today))
     model.train()
     model.predict()
-    model.plot_prediction(save=True)
+    model.plot_prediction(plot_output='tensorboard')
 
     # TODO (Michael): Should return the loss as well
     return model.prediction_df
