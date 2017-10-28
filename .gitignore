@@ -13,6 +13,7 @@
 *.pyc
 *.db
 *.feather
+checkpoints/
 
 # Virtualenv folder
 venv/
