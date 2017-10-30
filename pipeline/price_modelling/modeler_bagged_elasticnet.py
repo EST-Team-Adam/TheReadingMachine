@@ -37,10 +37,10 @@ def get_topic_variables():
         .where(lambda x: x != 'id')
         .dropna()
         .tolist())
-    cmoplete_topic_variable = [v + suffix
+    complete_topic_variable = [v + suffix
                                for v in topic_variables
                                for suffix in ['_pos', '_neg']]
-    return cmoplete_topic_variable
+    return complete_topic_variable
 
 
 def transform_harmonised_data(data, forecast_period, topic_variables,
@@ -86,7 +86,7 @@ def build_datasets(complete_data, forecast_period, holdout_period,
 def train_bag_elasticnet(complete_data, forecast_period, holdout_period,
                          bootstrapIteration, topic_variables,
                          response_variable, date_col='date'):
-    '''Function to bag and train the Elastic net iwth cross-validation
+    '''Function to bag and train the Elastic net with cross-validation
     error as weight.
 
     '''
@@ -101,7 +101,10 @@ def train_bag_elasticnet(complete_data, forecast_period, holdout_period,
     total_variable_count = len(topic_variables)
     predictions = np.zeros(shape=(observation_length, bootstrapIteration))
     cv_min = np.zeros(bootstrapIteration)
-    # This is the of the implementation in R due to the specification of Python
+    # The reciprocoal value is taken in order to match the
+    # parameterisation in the original R implementation. This is due
+    # to the fact that the exponential distribution being
+    # parameterised differently.
     sample_rate = 1 / (10 / total_variable_count)
 
     for i in range(bootstrapIteration):
