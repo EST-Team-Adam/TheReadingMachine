@@ -93,7 +93,6 @@ trainBagElasticnet = function(trainData, testData, predictionData,
         currentModel = cv.glmnet(as.matrix(trainData[, baggingVariable]),
                                  trainData[[responseVariable]],
                                  nfold = nfold,
-                                 standardize = FALSE,
                                  alpha = alpha)
 
         ## Update the prediciton matrix
