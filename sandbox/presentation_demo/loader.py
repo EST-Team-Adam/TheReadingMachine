@@ -7,8 +7,6 @@ from bokeh.plotting import figure
 from builder import TopicModel
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-# import matplotlib.pyplot as plt
-
 app = Flask(__name__)
 
 # Load the harmonised topic sentiment data
@@ -41,12 +39,15 @@ def text_to_topic_sentiment():
         input_topic = ctr.get_top_topic(
             text=joined_text, k=5, model=loaded_model)
 
-        input_topic_series = harmonised_article[input_topic]
+        topic_label = input_topic.index.tolist()
+
+        input_topic_series = harmonised_article[topic_label]
         input_topic_series.index = harmonised_article.date
         for i in range(k):
             smoothed = input_topic_series.iloc[:, i].rolling(365).sum()
             p.line(input_topic_series.index, smoothed,
-                   line_color=mypalette[i], legend=input_topic[i])
+                   line_color=mypalette[i], legend='{}: {}%'.format(
+                       topic_label[i], round(input_topic[i] * 100, 2)))
         p.legend.location = "top_left"
         p.legend.click_policy = "hide"
     return p
@@ -60,6 +61,9 @@ def index():
         input_text = ''
 
     score = str(analyzer.polarity_scores(input_text)['compound'])
+    # pt = processed_text()
+    # topic = topic_scoring(pt)
+    # plot = plot_topic_sentiment(topic)
     plot = text_to_topic_sentiment()
 
     # # Embed plot into HTML via Flask Render
