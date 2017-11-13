@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
@@ -126,20 +125,6 @@ class TopicModel(object):
         # define the linkage_matrix using ward clustering pre-computed
         # distances
         self.linkage_matrix = sp.cluster.hierarchy.ward(self.topic_dist)
-
-        if plot:
-            fig, ax = plt.subplots(figsize=(10, 60))  # set size
-            ax = sp.cluster.hierarchy.dendrogram(self.linkage_matrix,
-                                                 orientation='left',
-                                                 labels=np.array(
-                                                     self.nmf_labels),
-                                                 leaf_font_size=16)
-            # plt.tick_params(axis= 'x', which='both', bottom='off', top='off',
-            # labelbottom='off')
-            plt.tight_layout()
-            if save_fig:
-                # save figure as ward_clusters
-                plt.savefig('topic_heirarchy.png', dpi=200)
 
     def prune_dendrogram(self, t=1):
 
