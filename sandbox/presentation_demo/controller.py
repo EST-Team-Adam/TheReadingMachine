@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import pandas as pd
 from sqlalchemy import create_engine
@@ -207,4 +208,8 @@ def get_top_topic(text, k, model):
     tfidf = model.tf_vectorizer.transform(text)
     nmf = model.nmf[100].transform(tfidf)
     topic_series = pd.Series(nmf[0], index=model.nmf_labels)
-    return topic_series.sort_values().tail(k).index.tolist()
+    top_topics = topic_series.sort_values().tail(k)
+    scaled_topic = top_topics / top_topics.sum()
+    print(scaled_topic)
+    # return topic_series.sort_values().tail(k).index.tolist()
+    return scaled_topic
