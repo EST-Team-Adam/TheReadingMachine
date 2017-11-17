@@ -93,29 +93,6 @@ topic_modelling = BashOperator(bash_command=topic_modelling_command,
                                dag=dag)
 db_topic_modelling = DummyOperator(task_id='db_topic_modelling', dag=dag)
 
-# Geo_Tagging
-# --------------------
-geo_tagging_script_path = os.path.join(
-    process_directory, 'geo_tagging/processor.py')
-geo_tagging_command = 'python {}'.format(
-    geo_tagging_script_path)
-geo_tagging = BashOperator(bash_command=geo_tagging_command,
-                           task_id='geo_tagging',
-                           params=default_args,
-                           dag=dag)
-db_geo_tagging = DummyOperator(task_id='db_geo_tagging', dag=dag)
-
-# Commodity tagging
-# --------------------
-commodity_tagging_script_path = os.path.join(
-    process_directory, 'commodity_tagging/processor.py')
-commodity_tagging_command = 'python {}'.format(
-    commodity_tagging_script_path)
-commodity_tagging = BashOperator(bash_command=commodity_tagging_command,
-                                 task_id='commodity_tagging',
-                                 params=default_args,
-                                 dag=dag)
-db_commodity_tagging = DummyOperator(task_id='db_commodity_tagging', dag=dag)
 
 # Data harmonisation
 # --------------------
@@ -163,18 +140,12 @@ db_processed_article.set_upstream(article_processing)
 
 sentiment_scoring.set_upstream(db_processed_article)
 topic_modelling.set_upstream(db_processed_article)
-geo_tagging.set_upstream(db_processed_article)
-commodity_tagging.set_upstream(db_processed_article)
 
 db_sentiment_scoring.set_upstream(sentiment_scoring)
 db_topic_modelling.set_upstream(topic_modelling)
-db_geo_tagging.set_upstream(geo_tagging)
-db_commodity_tagging.set_upstream(commodity_tagging)
 
 data_harmonisation.set_upstream(db_sentiment_scoring)
 data_harmonisation.set_upstream(db_topic_modelling)
-data_harmonisation.set_upstream(db_geo_tagging)
-data_harmonisation.set_upstream(db_commodity_tagging)
 
 db_data_harmonisation.set_upstream(data_harmonisation)
 
