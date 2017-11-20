@@ -9,11 +9,15 @@
 import os
 import json
 import threading
-import time
 from scrapy.exceptions import DropItem
+from datetime import datetime
 
 data_dir = os.environ['DATA_DIR']
 scraper_file_prefix = os.environ['SCRAPER_FILE_PREFIX']
+scraper_output_path = os.path.join(data_dir, 'scraper_output')
+
+if not os.path.exists(scraper_output_path):
+    os.makedirs(scraper_output_path)
 
 
 class DuplicatesPipeline(object):
@@ -69,12 +73,14 @@ class AmisJsonPipeline(object):
 
     def __init__(self):
         self.datafiles = {}
+        self.today = datetime.today()
 
     def open_spider(self, spider):
         if spider.name not in self.datafiles.keys():
             target_file_name = '{}_{}_{}.jsonl'.format(
-                scraper_file_prefix, time.strftime('%d_%m_%Y'), spider.name)
-            target_file_path = os.path.join(data_dir, target_file_name)
+                scraper_file_prefix, self.today.strftime('%Y_%m_%d'), spider.name)
+            target_file_path = os.path.join(
+                scraper_output_path, target_file_name)
             self.datafiles[spider.name] = open(target_file_path, 'a')
         self.lock = threading.Lock()
 

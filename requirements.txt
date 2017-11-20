@@ -100,6 +100,7 @@ Twisted==17.5.0
 twitter==1.17.1
 Unidecode==0.4.21
 urllib3==1.22
+vaderSentiment==2.5
 w3lib==1.18.0
 wcwidth==0.1.7
 Werkzeug==0.12.2

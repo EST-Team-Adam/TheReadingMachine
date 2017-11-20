@@ -1,9 +1,6 @@
 import pandas as pd
 import numpy as np
 import scipy as sp
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import NMF
@@ -65,18 +62,9 @@ class TopicModel(object):
         if n_topics is None:
             n_topics = [self.n_topics]
         self.nmf = dict()
-
-        # self.reconstruction_error = pd.DataFrame(index=np.arange(0, len(n_topics)),
-        # columns = ('n_components', 'alpha', 'l1_ratio',
-        # 'reconstruction_error'))
-
-        # n = 0
         for k in n_topics:
             self.nmf[k] = NMF(n_components=k, random_state=1,
                               alpha=alpha, l1_ratio=l1).fit(self.tf)
-            # self.reconstruction_error.loc[n] = [k, alpha, l1, self.nmf[k].reconstruction_err_]
-        # n = n + 1
-        # print self.reconstruction_error
 
     def get_topics(self, k=None):
         if k is None:
@@ -90,9 +78,6 @@ class TopicModel(object):
             index=self.corpus.index)
 
         for topic_idx, topic in enumerate(self.nmf[k].components_):
-            # print('Topic #%d: ' % topic_idx + '
-            # '.join([self.tf_feature_names[i] for i in
-            # topic.argsort()[:-51:-1]]))
             self.nmf_topics.append('Topic #%d: ' % topic_idx + ' '.join(
                 [self.tf_feature_names[i] for i in topic.argsort()[:-11:-1]]))
             self.nmf_labels.append(
@@ -103,16 +88,6 @@ class TopicModel(object):
         self.nmf_documents_topics.columns = self.nmf_labels
         self.topic_dist = np.matrix(
             1 - cosine_similarity(self.nmf[k].components_))
-
-        # topic_min_dist = np.where(
-        # self.topic_dist == self.topic_dist[np.where(self.topic_dist >
-        # 0.01)].min())[0]
-
-        # print('The two closest Topics have a cosine similarity of ' + str(self.topic_dist[np.where(self.topic_dist >.6)].min()))
-        # print('')
-        # print('Topic 1: ' + str(self.nmf_topics[topic_min_dist[0]]))
-        # print('')
-        # print('Topic 2: ' + str(self.nmf_topics[topic_min_dist[1]]))
 
     def cluster_topics(self, k=None, plot=False, save_fig=False):
 
@@ -125,20 +100,6 @@ class TopicModel(object):
         # define the linkage_matrix using ward clustering pre-computed
         # distances
         self.linkage_matrix = sp.cluster.hierarchy.ward(self.topic_dist)
-
-        if plot:
-            fig, ax = plt.subplots(figsize=(10, 60))  # set size
-            ax = sp.cluster.hierarchy.dendrogram(self.linkage_matrix,
-                                                 orientation='left',
-                                                 labels=np.array(
-                                                     self.nmf_labels),
-                                                 leaf_font_size=16)
-            # plt.tick_params(axis= 'x', which='both', bottom='off', top='off',
-            # labelbottom='off')
-            plt.tight_layout()
-            if save_fig:
-                # save figure as ward_clusters
-                plt.savefig('topic_heirarchy.png', dpi=200)
 
     def prune_dendrogram(self, t=1):
 
