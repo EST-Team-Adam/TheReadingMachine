@@ -55,15 +55,6 @@ def get_topic_modelled_article():
     return scaled_topic
 
 
-def get_commodity_tagged_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    commodity_tagged_article = pd.read_sql(
-        'SELECT * FROM CommodityTaggedArticle', engine)
-    return commodity_tagged_article
-
-
 def compute_topic_score(pos_sentiment_col, neg_sentiment_col, topic,
                         id_col='id'):
     original_id = topic[id_col]
@@ -91,7 +82,6 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
     model_price = igc_price[(igc_price[date_col] >= rnn_start_date) &
                             (igc_price[date_col] <= article_max_date)]
 
-    # commodity_tagged_article = get_commodity_tagged_article()
     scored_topic = compute_topic_score(
         pos_sentiment_col=sentiment_scored_article[pos_sentiment_col],
         neg_sentiment_col=sentiment_scored_article[neg_sentiment_col],
