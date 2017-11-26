@@ -38,19 +38,9 @@ def get_topic_modelled_article():
     return topic_modelled_article
 
 
-def get_commodity_tagged_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    commodity_tagged_article = pd.read_sql(
-        'SELECT * FROM CommodityTaggedArticle', engine)
-    return commodity_tagged_article
-
-
 def compute_topic_score(pos_sentiment_col, neg_sentiment_col, topic,
                         id_col='id'):
     original_id = topic[id_col]
-    # scored_topic = topic.drop(id_col, axis=1).apply(lambda x: x * sentiment)
     pos_scored_topic = topic.drop(id_col, axis=1).apply(
         lambda x: x * pos_sentiment_col)
     new_pos_names = {n: n + '_pos'
@@ -96,13 +86,12 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
     #                 the sum is 0. Since the division of 0 is NaN we
     #                 replace it with 0.
 
-    commodity_tagged_article = get_commodity_tagged_article()
     scored_topic = compute_topic_score(
         pos_sentiment_col=sentiment_scored_article[pos_sentiment_col],
         neg_sentiment_col=sentiment_scored_article[neg_sentiment_col],
         topic=topic_modelled_article, id_col=id_col)
 
-    processed_article_list = [scored_topic, commodity_tagged_article]
+    processed_article_list = [scored_topic]
 
     harmonised_article = reduce(lambda dfx, dfy:
                                 pd.merge(dfx, dfy, on='id', how='inner'),

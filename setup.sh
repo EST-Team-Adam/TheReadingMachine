@@ -21,6 +21,9 @@ pip install -r requirements.txt
 # Download the required nltk datasets
 python $DATA_DIR/nltk_data_downloader.py
 
+# Create data base
+touch the_reading_machine.db
+
 # Initialise Airflow
 airflow initdb
 
