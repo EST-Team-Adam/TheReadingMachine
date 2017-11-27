@@ -28,3 +28,5 @@ data/taggers/
 data/tokenizers/
 data/credentials.txt
 
+# AWS
+.aws

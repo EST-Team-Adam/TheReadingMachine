@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# Load virtualenv
-if [[ "$VIRTUAL_ENV" == "" ]]
-then
-    source venv/bin/activate
-fi
-
-# Load environment variable
 source set_env_var.sh
 
 # Start webserver
@@ -21,4 +14,4 @@ else
 fi
 
 # Start scheduler
-airflow scheduler&
+airflow scheduler

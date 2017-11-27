@@ -1,0 +1,53 @@
+# General
+*~
+*#*
+*.DS_Store
+*.Rhistory
+*.pdf
+*.bin
+.aws/
+
+
+# Data files and db
+*.pkl
+*.jsonl
+*.csv
+*.pyc
+*.db
+*.feather
+*.jpeg
+data/the_reading_machine.db
+airflow/airflow.db
+
+# Cache and checkpoints
+*checkpoints/*
+*.ipynb_checkpoints/*
+*__pycache__/*
+
+# Virtualenv folder
+venv/
+
+# logs
+*/logs/*
+*.log
+
+# NLTK data
+data/corpora
+data/taggers
+data/tokenizers
+data/credentials.txt
+data/scraper_output
+
+# sandbox
+sandbox/
+
+# Unused modules
+pipeline/commodity_tagging
+pipeline/geo_tagging
+pipeline/twitter_scraper
+pipeline/word_embedding
+
+# Other miscellaneous file
+TODO.txt
+mvp_plan.md
+papers/
