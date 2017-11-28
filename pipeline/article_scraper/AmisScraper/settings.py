@@ -15,7 +15,7 @@ SPIDER_MODULES = ['AmisScraper.spiders']
 NEWSPIDER_MODULE = 'AmisScraper.spiders'
 
 
-LOG_STDOUT = True
+LOG_STDOUT = False
 LOG_FILE = 'scrapy_output.log'
 
 
