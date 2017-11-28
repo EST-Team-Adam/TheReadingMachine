@@ -48,7 +48,6 @@ def save_json_to_db(spiders, date_col='date'):
             scraper_file_prefix, today.strftime('%Y_%m_%d'), spider)
         current_file_path = os.path.join(
             scraper_output_path, current_file_name)
-        print(current_file_path)
 
         if os.path.isfile(current_file_path):
             current_source = pd.read_json(current_file_path, lines=True)
