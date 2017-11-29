@@ -58,20 +58,19 @@ def save_json_to_db(spiders, date_col='date'):
             raise TypeError(
                 'source file for spider "{}" does not exist'.format(spider))
 
-    flattened_article_df.to_sql(con=engine,
-                                name=target_data_table,
-                                index=False,
-                                if_exists='replace',
-                                dtype=field_type)
-
-    # Delete old files
-    #
-    # We delete files from two days ago, so that we still have data scraped
-    # yester for recover.
-    two_days_ago = today - timedelta(days=2)
-    old_file_name = '{}_{}_{}.jsonl'.format(
-        scraper_file_prefix, two_days_ago.strftime('%Y_%m_%d'), spider)
-    old_file_path = os.path.join(
-        scraper_output_path, old_file_name)
-    if os.path.isfile(old_file_path):
-        os.remove(old_file_path)
+        flattened_article_df.to_sql(con=engine,
+                                    name=target_data_table,
+                                    index=False,
+                                    if_exists='replace',
+                                    dtype=field_type)
+        # Delete old files
+        #
+        # We delete files from two days ago, so that we still have data scraped
+        # yester for recover.
+        two_days_ago = today - timedelta(days=2)
+        old_file_name = '{}_{}_{}.jsonl'.format(
+            scraper_file_prefix, two_days_ago.strftime('%Y_%m_%d'), spider)
+        old_file_path = os.path.join(
+            scraper_output_path, old_file_name)
+        if os.path.isfile(old_file_path):
+            os.remove(old_file_path)
