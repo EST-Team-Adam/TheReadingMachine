@@ -30,6 +30,7 @@ venv/
 # logs
 */logs/*
 *.log
+pipeline/article_scraper/scrapy_output.log
 
 # NLTK data
 data/corpora
@@ -46,6 +47,7 @@ pipeline/commodity_tagging
 pipeline/geo_tagging
 pipeline/twitter_scraper
 pipeline/word_embedding
+pipeline/price_modelling
 
 # Other miscellaneous file
 TODO.txt
