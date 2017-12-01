@@ -10,3 +10,4 @@ export NLTK_DATA=$DATA_DIR
 export AIRFLOW_WEBSERVER_PID=$PROJECT_HOME/airflow-webserver.pid
 export SCRAPER_FILE_PREFIX=blog_articles
 export WEBAPP_DIR=$PROJECT_HOME/webapp
+export WEBAPP_PLOT_DIR=$WEBAPP_DIR/templates/static/plotly

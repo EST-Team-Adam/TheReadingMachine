@@ -8,7 +8,7 @@ from plotly.offline import plot
 
 
 data_dir = os.environ['DATA_DIR']
-plot_output_dir = os.environ['WEBAPP_DIR']
+plot_output_dir = os.environ['WEBAPP_PLOT_DIR']
 target_data_table = 'PriceForecast'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 harmonised_table = 'HarmonisedData'
