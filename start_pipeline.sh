@@ -13,8 +13,10 @@ else
     echo "Web server starting"
 fi
 
-# Start scheduler
-airflow scheduler&
-
 # Start web app
-python $WEBAPP_DIR/app.py
+python $WEBAPP_DIR/app.py&
+
+# Start scheduler
+airflow scheduler
+
+
