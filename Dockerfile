@@ -17,8 +17,7 @@ WORKDIR $PROJECT_HOME
 RUN ./setup.sh
 
 # Port to expose
-EXPOSE 8080
-
+EXPOSE 5000 8080
 
 # Start with entry script
 ENTRYPOINT ./start_pipeline.sh
