@@ -14,4 +14,7 @@ else
 fi
 
 # Start scheduler
-airflow scheduler
+airflow scheduler&
+
+# Start web app
+python $WEBAPP_DIR/app.py
