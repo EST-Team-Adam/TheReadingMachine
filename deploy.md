@@ -49,9 +49,24 @@ ssh -i <location_of_pem_file> ec2-user@<instance_endpoint>
 Once in the instance, the reading machine can be launched via:
 
 ```
-sudo docker run -d -p 80:8080 thereadingmachine/thereadingmachine:<tag> --storage-opt dm.basesize=20G
+sudo docker run -d -p 80:8080 --mount source=./docker_data,destination=/app thereadingmachine/thereadingmachine:<tag> --storage-opt dm.basesize=20G
 ```
 
 The storage option is required, otherwise the container will run out of memory.
 
 Navigate to the endpoint and we will now have access to the `Airflow` dashboard.
+
+
+## CLean up
+
+Some times the Docker container can occupy too much of the disk space
+and require clean up. This can be done with the following command on
+the instance.
+
+```
+docker system prune -a -f
+```
+
+Please see the [community
+forum](https://forums.docker.com/t/some-way-to-clean-up-identify-contents-of-var-lib-docker-overlay/30604/2)
+for more information.
