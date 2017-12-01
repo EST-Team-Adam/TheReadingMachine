@@ -8,6 +8,7 @@ from plotly.offline import plot
 
 
 data_dir = os.environ['DATA_DIR']
+plot_output_dir = os.environ['WEBAPP_DIR']
 target_data_table = 'PriceForecast'
 engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
 harmonised_table = 'HarmonisedData'
@@ -207,4 +208,6 @@ def create_sentiment_plot(sentiment_df):
     )
 
     plot_output = [positive_polygon, negative_polygon, price_series]
-    plot(plot_output, filename='market_sentiments.html', auto_open=True)
+    plot(plot_output,
+         filename=os.path.join(plot_output_dir, 'market_sentiments.html'),
+         auto_open=True)

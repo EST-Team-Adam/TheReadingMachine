@@ -11,6 +11,7 @@ weights = ctr.estimate_sentiment_weights(model_data)
 market_sentiments = ctr.compute_market_sentiments(
     model_data, weights, 'date', original_price_variable)
 
+# Save the data back to the database
 market_sentiments.to_sql(con=ctr.engine, name=target_data_table, index=False,
                          if_exists='replace')
 
