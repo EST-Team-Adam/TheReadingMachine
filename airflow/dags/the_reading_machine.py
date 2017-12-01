@@ -106,6 +106,18 @@ data_harmonisation = BashOperator(bash_command=data_harmonisation_command,
                                   dag=dag)
 db_data_harmonisation = DummyOperator(task_id='db_data_harmonisation', dag=dag)
 
+# Compute the market force
+# --------------------
+compute_market_force_script_path = os.path.join(
+    process_directory, 'compute_market_force/processor.py')
+compute_market_force_command = 'python {}'.format(
+    compute_market_force_script_path)
+compute_market_force = BashOperator(bash_command=compute_market_force_command,
+                                    task_id='compute_market_force',
+                                    params=default_args,
+                                    dag=dag)
+
+
 ########################################################################
 # Create dependency
 ########################################################################
@@ -126,3 +138,4 @@ data_harmonisation.set_upstream(db_sentiment_scoring)
 data_harmonisation.set_upstream(db_topic_modelling)
 
 db_data_harmonisation.set_upstream(data_harmonisation)
+compute_market_force.set_upstream(db_data_harmonisation)
