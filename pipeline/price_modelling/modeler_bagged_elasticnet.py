@@ -140,8 +140,8 @@ def train_bag_elasticnet(complete_data, forecast_period, holdout_period,
 def output():
     # Data extraction and processing
     topic_variables = get_topic_variables()
-    # price_data = ctr.get_igc_price(response='GOI')
     harmonised_data = get_harmonised_data()
+    harmonised_data.drop(ctr.individual_price, axis=1, inplace=True)
     transformed_data = (
         transform_harmonised_data(data=harmonised_data,
                                   forecast_period=ctr.forecast_period,
