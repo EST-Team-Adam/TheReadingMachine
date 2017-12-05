@@ -40,6 +40,8 @@ ipython==5.4.1
 ipython-genutils==0.2.0
 itsdangerous==0.24
 Jinja2==2.8.1
+jsonschema==2.6.0
+jupyter-core==4.4.0
 lockfile==0.12.2
 lxml==3.8.0
 Mako==1.0.7
@@ -47,6 +49,7 @@ Markdown==2.6.9
 MarkupSafe==1.0
 matplotlib==2.0.2
 mock==2.0.0
+nbformat==4.4.0
 nltk==3.2.4
 numpy==1.13.1
 ordereddict==1.1
@@ -57,6 +60,7 @@ patsy==0.4.1
 pbr==3.1.1
 pexpect==4.2.1
 pickleshare==0.7.4
+plotly==2.2.2
 ply==3.10
 prompt-toolkit==1.0.15
 protobuf==3.4.0
