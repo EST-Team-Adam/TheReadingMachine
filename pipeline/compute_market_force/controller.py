@@ -18,7 +18,6 @@ filter_coef = 1
 sentiment_scale = 50
 bootstrapIteration = 75
 forecast_period = 180
-response_variable = 'response'
 
 
 def get_harmonised_data():
@@ -47,7 +46,8 @@ def get_topic_variables():
 
 
 def transform_harmonised_data(data, forecast_period, topic_variables,
-                              response_variable, filter_coef):
+                              response_variable, all_price_variables,
+                              filter_coef):
     '''Function to transform the harmonised data for modeling.
 
     The following transformation are performed:
@@ -61,8 +61,11 @@ def transform_harmonised_data(data, forecast_period, topic_variables,
                                  for i in data.columns
                                  if 'contain' not in i]
     transformed_data = data.copy()[non_commodity_tag_columns]
-    transformed_data[response_variable] = (
-        transformed_data['GOI'].shift(-forecast_period))
+    transformed_data['response'] = (
+        transformed_data[response_variable].shift(-forecast_period))
+    other_price_variables = [v for v in all_price_variables
+                             if v != response_variable]
+    transformed_data.drop(other_price_variables, axis=1, inplace=True)
 
     # Perform cumsum, the implementation in R is more flexible where a
     # filter cefficient can be applied.
@@ -73,20 +76,15 @@ def transform_harmonised_data(data, forecast_period, topic_variables,
     return transformed_data
 
 
-# def sum_sentiments(sentiments):
-#     ''' Sum up the sentiments according to the sign.
-#     '''
-#     pos_sentiment = sentiments[sentiments > 0].sum()
-#     neg_sentiment = sentiments[sentiments < 0].sum()
-#     return pos_sentiment, neg_sentiment
-
 def sum_sentiments(sentiments):
-    pos_sentiment = sentiments[:100].sum()
-    neg_sentiment = sentiments[100:].sum()
+    ''' Sum up the sentiments according to the sign.
+    '''
+    pos_sentiment = sentiments[sentiments > 0].sum()
+    neg_sentiment = sentiments[sentiments < 0].sum()
     return pos_sentiment, neg_sentiment
 
 
-def create_model_data():
+def create_model_data(response_variable, all_price_variables):
     # Get the input data
     topic_variables = get_topic_variables()
     harmonised_data = get_harmonised_data()
@@ -95,15 +93,16 @@ def create_model_data():
                                   forecast_period=forecast_period,
                                   topic_variables=topic_variables,
                                   filter_coef=filter_coef,
-                                  response_variable=response_variable))
+                                  response_variable=response_variable,
+                                  all_price_variables=all_price_variables))
     return model_data
 
 
-def estimate_sentiment_weights(model_data):
+def estimate_sentiment_weights(model_data, response_variable):
 
     # Drop the dates, original price and NA's
-    model_data = model_data.drop(['date', 'GOI'], axis=1).dropna()
-    topic_variables = [v for v in model_data.columns if v != response_variable]
+    model_data = model_data.drop(['date', response_variable], axis=1).dropna()
+    topic_variables = [v for v in model_data.columns if v != 'response']
 
     # Use bagged elasticnet to estimate the coefficients
     total_variable_count = len(topic_variables)
@@ -119,7 +118,7 @@ def estimate_sentiment_weights(model_data):
                              n_jobs=-1, normalize=True)
 
         model.fit(model_data[bagging_variables],
-                  model_data[response_variable])
+                  model_data['response'])
         coef_index = [topic_variables.index(bv) for bv in bagging_variables]
         bagged_coefs[i, coef_index] = model.coef_
 
@@ -148,23 +147,20 @@ def compute_market_sentiments(model_data, weights, date_col,
         {'date': model_data[date_col],
          'price': model_data[original_price_variable],
          'positive_market_sentiment': scaled_p,
-         'negative_market_sentiment': scaled_n})
+         'negative_market_sentiment': scaled_n,
+         'commodity': original_price_variable.lower()})
 
 
 def create_polygon(dates, price, sentiment):
     ''' Calculate the sequence of points for the polygon.
     '''
-    # x = dates + dates[::-1]
-    # dev = [p + s for p, s in zip(price, sentiment)]
-    # y = price + dev[::-1]
-    # return x, y
     x = pd.concat([dates, dates[::-1]])
     deviance = price + sentiment
     y = pd.concat([price, deviance[::-1]])
     return x, y
 
 
-def create_sentiment_plot(sentiment_df):
+def create_sentiment_plot(sentiment_df, response_variable):
     ''' Creates a plotly html plot.
     '''
 
@@ -193,7 +189,7 @@ def create_sentiment_plot(sentiment_df):
             color=('rgb(0, 152, 0)'),
             width=0),
         fill='tozeroy',
-        name='positive sentiment'
+        name='positive force'
     )
 
     negative_polygon = go.Scatter(
@@ -204,10 +200,12 @@ def create_sentiment_plot(sentiment_df):
             color=('rgb(152, 0, 0)'),
             width=0),
         fill='tozeroy',
-        name='negative sentiment'
+        name='negative force'
     )
 
     plot_output = [positive_polygon, negative_polygon, price_series]
+    out_file_name = '{}_market_sentiments.html'.format(
+        response_variable.lower())
     plot(plot_output,
-         filename=os.path.join(plot_output_dir, 'market_sentiments.html'),
+         filename=os.path.join(plot_output_dir, out_file_name),
          auto_open=True)
