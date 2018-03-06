@@ -17,7 +17,7 @@ harmonised_table = 'HarmonisedData'
 filter_coef = 1
 sentiment_scale = 50
 bootstrapIteration = 75
-forecast_period = 180
+forecast_period = 0
 
 
 def get_harmonised_data():
@@ -186,7 +186,7 @@ def create_sentiment_plot(sentiment_df, response_variable):
         y=pos_y,
         mode='lines',
         line=dict(
-            color=('rgb(0, 152, 0)'),
+            color=('rgb(152, 0, 0)'),
             width=0),
         fill='tozeroy',
         name='positive force'
@@ -197,7 +197,7 @@ def create_sentiment_plot(sentiment_df, response_variable):
         y=neg_y,
         mode='lines',
         line=dict(
-            color=('rgb(152, 0, 0)'),
+            color=('rgb(0, 152, 0)'),
             width=0),
         fill='tozeroy',
         name='negative force'
