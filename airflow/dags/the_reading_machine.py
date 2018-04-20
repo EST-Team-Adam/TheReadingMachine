@@ -15,7 +15,7 @@ process_directory = os.path.join(conf.get('core', 'process_folder'))
 default_args = {
     'owner': 'michael',
     'depends_on_past': False,
-    'start_date': datetime(2018, 2, 28),
+    'start_date': datetime(2018, 4, 20),
     'email': ['michael.kao@fao.org'],
     'email_on_failure': True,
     'email_on_retry': False,
