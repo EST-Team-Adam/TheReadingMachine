@@ -5,6 +5,7 @@
 *.Rhistory
 *.log
 *.pdf
+*.zip
 
 # Data files and db
 *.pkl
