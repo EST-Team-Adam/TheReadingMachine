@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sklearn.linear_model import ElasticNetCV
 import plotly.graph_objs as go
 from plotly.offline import plot
-
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 data_dir = os.environ['DATA_DIR']
 plot_output_dir = os.environ['WEBAPP_PLOT_DIR']
@@ -100,35 +100,23 @@ def create_model_data(response_variable, all_price_variables):
 
 def estimate_sentiment_weights(model_data, response_variable):
 
-    # Drop the dates, original price and NA's
-    model_data = model_data.drop(['date', response_variable], axis=1).dropna()
-    topic_variables = [v for v in model_data.columns if v != 'response']
+    model = ElasticNetCV(n_alphas=100,
+                         tol=1e-7, max_iter=1e7, cv=10, n_jobs=-1,
+                         fit_intercept=False, normalize=True)
+    topic_variables = get_topic_variables()
+    demeaned_response = model_data['response'] - model_data['response'].mean()
+    smoothed_response = lowess(demeaned_response,
+                               range(len(model_data['response'])),
+                               return_sorted=False,
+                               frac=0.1)
+    normalised_response = pd.Series(smoothed_response).diff().fillna(0)
 
-    # Use bagged elasticnet to estimate the coefficients
-    total_variable_count = len(topic_variables)
-    sample_rate = 1 / (10.0 / total_variable_count)
-    bagged_coefs = np.zeros((bootstrapIteration, total_variable_count))
-
-    for i in range(bootstrapIteration):
-        bagging_size = min([total_variable_count,
-                            int(np.random.exponential(sample_rate) + 2)])
-        bagging_variables = np.random.choice(topic_variables, bagging_size)
-        model = ElasticNetCV(n_alphas=100, l1_ratio=1,
-                             tol=1e-7, max_iter=100000, cv=10,
-                             n_jobs=-1, normalize=True)
-
-        model.fit(model_data[bagging_variables],
-                  model_data['response'])
-        coef_index = [topic_variables.index(bv) for bv in bagging_variables]
-        bagged_coefs[i, coef_index] = model.coef_
-
-    # Aggregate the bootstraped weights
-    coefs = np.mean(bagged_coefs, axis=0)
-    return coefs
+    model.fit(model_data[topic_variables], normalised_response)
+    return model.coef_
 
 
 def scale(x, scale):
-    scaled_x = (x - min(x)) / (max(x) - min(x))
+    scaled_x = x / (x.max() - x.min())
     return scaled_x * scale
 
 
@@ -138,11 +126,9 @@ def compute_market_sentiments(model_data, weights, date_col,
     inputs = np.array(model_data[topic_variables])
     outputs = (inputs * weights)
     p, n = zip(*[sum_sentiments(s) for s in outputs])
-    # HACK (Michael): The negation makes the graph look reasonable,
-    #                 but this is a major HACK that doesn't make
-    #                 sense.
-    scaled_p = scale(-pd.Series(p), sentiment_scale)
-    scaled_n = -scale(-pd.Series(n), sentiment_scale)
+    scaled_p = scale(pd.Series(p), sentiment_scale)
+    scaled_n = scale(pd.Series(n), sentiment_scale)
+
     return pd.DataFrame(
         {'date': model_data[date_col],
          'price': model_data[original_price_variable],
@@ -171,6 +157,7 @@ def create_sentiment_plot(sentiment_df, response_variable):
     neg_x, neg_y = create_polygon(sentiment_df['date'],
                                   sentiment_df['price'],
                                   sentiment_df['negative_market_sentiment'])
+
     price_series = go.Scatter(
         x=sentiment_df['date'],
         y=sentiment_df['price'],
