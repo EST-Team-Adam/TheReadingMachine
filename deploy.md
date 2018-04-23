@@ -4,7 +4,10 @@
 
 ### Build Docker image
 
-The image can be built by
+The `build.sh` script is available to build the image then push to
+[Dockerhub](https://hub.docker.com/r/thereadingmachine/thereadingmachine/).
+
+Otherwise, you can build it manually by following the instructions below.
 
 ```
 sudo docker build -t thereadingmachine/thereadingmachine:<tag> .
@@ -57,7 +60,7 @@ The storage option is required, otherwise the container will run out of memory.
 Navigate to the endpoint and we will now have access to the `Airflow` dashboard.
 
 
-## CLean up
+## Clean up
 
 Some times the Docker container can occupy too much of the disk space
 and require clean up. This can be done with the following command on
