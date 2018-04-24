@@ -2,7 +2,7 @@ import pandas as pd
 import controller as ctr
 
 target_data_table = 'MarketForce'
-price_variables = ['GOI', 'Wheat', 'Maize', 'Barley', 'Soyabean', 'Rice']
+price_variables = ['Wheat', 'Maize', 'Soyabean', 'Rice']
 
 market_sentiments = list()
 for price in price_variables:
