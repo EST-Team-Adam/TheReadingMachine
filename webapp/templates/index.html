@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <title>Python &raquo; Dashboards</title>
     <link rel="shortcut icon" href="https://plot.ly/gh-pages/documentation/static//images/plotly-ico.png" />
     <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css" />
@@ -20,11 +24,23 @@
 
     <div class="container-fluid">
       <div class="row">
+        <div class="chart-wrapper">
+          <div class="chart-title">
+            Commodity Sentiment Outlook
+          </div>
+          <iframe width="100%" height="240px" frameborder="0" scrolling="no" src="static/plotly/sentiment_traffic_light.html"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+
         
         <div class="col-sm-6">
           <div class="chart-wrapper">
             <div class="chart-title">
-              Wheat Index
+              Wheat Sentiment Spread
             </div>
             <div class="chart-stage">
               <iframe width="100%" height="480px" frameborder="0" scrolling="no" src="static/plotly/wheat_market_sentiments.html"></iframe>
@@ -35,7 +51,7 @@
         <div class="col-sm-6">
           <div class="chart-wrapper">
             <div class="chart-title">
-              Maize Index
+              Maize Sentiment Spread
             </div>
             <div class="chart-stage">
               <iframe width="100%" height="480px" frameborder="0" scrolling="no" src="static/plotly/maize_market_sentiments.html"></iframe>
@@ -46,7 +62,7 @@
         <div class="col-sm-6">
           <div class="chart-wrapper">
             <div class="chart-title">
-              Soyabean Index
+              Soyabean Sentiment Spread
             </div>
             <div class="chart-stage">
               <iframe width="100%" height="480px" frameborder="0" scrolling="no" src="static/plotly/soyabean_market_sentiments.html"></iframe>
@@ -57,7 +73,7 @@
         <div class="col-sm-6">
           <div class="chart-wrapper">
             <div class="chart-title">
-              Rice  Index
+              Rice  Sentiment Spread
             </div>
             <div class="chart-stage">
               <iframe width="100%" height="480px" frameborder="0" scrolling="no" src="static/plotly/rice_market_sentiments.html"></iframe>
