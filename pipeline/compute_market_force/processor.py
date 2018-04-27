@@ -1,13 +1,13 @@
 import pandas as pd
-import controller as ctr
-
-target_data_table = 'MarketForce'
-price_variables = ['Wheat', 'Maize', 'Soyabean', 'Rice']
+import thereadingmachine.environment as env
+import thereadingmachine.modeller.compute_market_force as ctr
+import thereadingmachine.parameter as param
+import thereadingmachine.utils.io as io
 
 market_sentiments = list()
 market_sentiments_index = list()
-for price in price_variables:
-    model_data = ctr.create_model_data(price, price_variables)
+for price in param.price_variables:
+    model_data = ctr.create_model_data(price, param.price_variables)
     # TODO (Michael): Add in the ability to load previous weights as
     #                 prior. This will improve the stability of the
     #                 construction.
@@ -28,5 +28,4 @@ market_sentiments_index_df = pd.concat(market_sentiments_index)
 ctr.create_sentiment_traffic_light(market_sentiments_index_df)
 
 # Save the sentiments back
-market_sentiments_df.to_sql(con=ctr.engine, name=target_data_table,
-                            index=False, if_exists='replace')
+io.save_table(data=market_sentiments_df, table_name=env.market_force_table)

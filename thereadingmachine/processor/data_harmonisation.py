@@ -1,41 +1,8 @@
 from __future__ import division
-import os
 import pandas as pd
-from sqlalchemy import create_engine
-from datetime import datetime
-
-topicModelTable = 'TopicModel'
-model_start_date = datetime(2010, 1, 1).date()
-
-
-def get_igc_price(response=None):
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    sentiment_scored_article = pd.read_sql(
-        'SELECT * FROM PriceIGC', engine, parse_dates=['date'])
-    if response:
-        sentiment_scored_article = sentiment_scored_article[['date', response]]
-    return sentiment_scored_article
-
-
-def get_sentiment_scored_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    sentiment_scored_article = pd.read_sql(
-        'SELECT * FROM SentimentScoredArticle', engine,
-        parse_dates=['date'])
-    return sentiment_scored_article
-
-
-def get_topic_modelled_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    topic_modelled_article = pd.read_sql(
-        'SELECT * FROM {}'.format(topicModelTable), engine)
-    return topic_modelled_article
+import thereadingmachine.environment as env
+import thereadingmachine.parameter as param
+import thereadingmachine.utils.io as io
 
 
 def compute_topic_score(pos_sentiment_col, neg_sentiment_col, topic,
@@ -62,12 +29,12 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
                       neg_sentiment_col='negative_sentiment',
                       id_col='id', date_col='date'):
 
-    sentiment_scored_article = get_sentiment_scored_article()
-    topic_modelled_article = get_topic_modelled_article()
-    igc_price = get_igc_price()
+    sentiment_scored_article = io.read_table(env.sentiment_scored_table)
+    topic_modelled_article = io.read_table(env.topic_model_table, dates=False)
+    igc_price = io.read_table(env.price_table)
 
     article_max_date = sentiment_scored_article[date_col].max()
-    model_price = igc_price[(igc_price[date_col] >= model_start_date) &
+    model_price = igc_price[(igc_price[date_col] >= param.model_start_date) &
                             (igc_price[date_col] <= article_max_date)]
 
     # HACK (Michael): There is an increase trend in the size of the

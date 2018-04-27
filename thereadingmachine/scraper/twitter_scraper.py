@@ -1,6 +1,5 @@
 import pandas as pd
 import sys
-
 from twitter import TwitterHTTPError
 
 

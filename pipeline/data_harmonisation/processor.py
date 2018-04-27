@@ -1,11 +1,6 @@
-import os
-import controller as ctr
-from sqlalchemy import create_engine
-
-# Configuration
-data_dir = os.environ['DATA_DIR']
-target_data_table = 'HarmonisedData'
-engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+import thereadingmachine.environment as env
+import thereadingmachine.processor.data_harmonisation as ctr
+import thereadingmachine.utils.io as io
 
 # Harmonise data
 harmonised_article = (
@@ -14,5 +9,4 @@ harmonised_article = (
                           id_col='id'))
 
 # Save back to database
-harmonised_article.to_sql(con=engine, name=target_data_table, index=False,
-                          if_exists='replace')
+io.save_table(data=harmonised_article, table_name=env.harmonised_table)
