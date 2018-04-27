@@ -1,4 +1,4 @@
-from AmisScraper.items import NewsArticleItem
+from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from datetime import datetime

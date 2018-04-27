@@ -1,4 +1,5 @@
 import re
+import pandas as pd
 from nltk.corpus import wordnet as wn
 
 
@@ -141,4 +142,4 @@ def commodity_tag_article(articles, article_field, id_field):
         tagged[id_field] = article.get(id_field)
         commodity_tagged_articles.append(tagged)
 
-    return commodity_tagged_articles
+    return pd.DataFrame(commodity_tagged_articles)

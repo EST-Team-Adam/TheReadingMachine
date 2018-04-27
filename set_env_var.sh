@@ -11,3 +11,4 @@ export AIRFLOW_WEBSERVER_PID=$PROJECT_HOME/airflow-webserver.pid
 export SCRAPER_FILE_PREFIX=blog_articles
 export WEBAPP_DIR=$PROJECT_HOME/webapp
 export WEBAPP_PLOT_DIR=$WEBAPP_DIR/templates/static/plotly
+export PYTHONPATH=$PROJECT_HOME:$PYTHONPATH

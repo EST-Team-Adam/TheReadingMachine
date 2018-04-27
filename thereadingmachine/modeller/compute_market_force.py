@@ -1,32 +1,14 @@
 import os
 import pandas as pd
 import numpy as np
-import colorlover as cl
-from sqlalchemy import create_engine
-from sklearn.linear_model import ElasticNetCV
 import plotly.graph_objs as go
+import thereadingmachine.environment as env
+import thereadingmachine.parameter as param
 from bisect import bisect_left
 from plotly.offline import plot
+from sklearn.linear_model import ElasticNetCV
 from statsmodels.nonparametric.smoothers_lowess import lowess
 from statsmodels.distributions.empirical_distribution import ECDF
-
-
-data_dir = os.environ['DATA_DIR']
-plot_output_dir = os.environ['WEBAPP_PLOT_DIR']
-target_data_table = 'PriceForecast'
-engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-harmonised_table = 'HarmonisedData'
-
-# Model parameters
-filter_coef = 1
-sentiment_scale = 50
-bootstrapIteration = 75
-forecast_period = 0
-
-# Plot parameters
-div_col_pallete = [cl.scales['11']['div']['RdYlGn'][i]
-                   for i in [10, 8, 5, 2, 0]]
-price_color = 'rgb(91, 146, 229)'
 
 
 def get_harmonised_data():
@@ -34,7 +16,7 @@ def get_harmonised_data():
     '''
 
     harmonised_data = pd.read_sql(
-        'SELECT * FROM {}'.format(harmonised_table), engine,
+        'SELECT * FROM {}'.format(env.harmonised_table), env.engine,
         parse_dates=['date'])
     return harmonised_data
 
@@ -44,7 +26,7 @@ def get_topic_variables():
     '''
 
     topic_variables = (
-        pd.read_sql('PRAGMA table_info(TopicModel)', engine)['name']
+        pd.read_sql('PRAGMA table_info(TopicModel)', env.engine)['name']
         .where(lambda x: x != 'id')
         .dropna()
         .tolist())
@@ -101,9 +83,9 @@ def create_model_data(response_variable, all_price_variables):
     harmonised_data = get_harmonised_data()
     model_data = (
         transform_harmonised_data(data=harmonised_data,
-                                  forecast_period=forecast_period,
+                                  forecast_period=param.forecast_period,
                                   topic_variables=topic_variables,
-                                  filter_coef=filter_coef,
+                                  filter_coef=param.filter_coef,
                                   response_variable=response_variable,
                                   all_price_variables=all_price_variables))
     return model_data
@@ -147,8 +129,8 @@ def compute_market_sentiments(model_data, weights, date_col,
     inputs = np.array(model_data[topic_variables])
     outputs = (inputs * weights)
     p, n = zip(*[sum_sentiments(s) for s in outputs])
-    scaled_p = scale(pd.Series(p), sentiment_scale)
-    scaled_n = scale(pd.Series(n), sentiment_scale)
+    scaled_p = scale(pd.Series(p), param.sentiment_scale)
+    scaled_n = scale(pd.Series(n), param.sentiment_scale)
 
     return pd.DataFrame(
         {'date': model_data[date_col],
@@ -199,7 +181,8 @@ def create_sentiment_traffic_light(data, commodity_col='commodity',
     ''' Creates the sentiment level traffic lights.
     '''
 
-    sent_level_color = [div_col_pallete[i - 1] for i in data[sent_level_col]]
+    sent_level_color = [param.div_col_pallete[i - 1]
+                        for i in data[sent_level_col]]
     traffic_light = [go.Scatter(x=data[commodity_col],
                                 y=[0] *
                                 len(data[commodity_col]),
@@ -214,7 +197,7 @@ def create_sentiment_traffic_light(data, commodity_col='commodity',
                        margin=go.Margin(l=40, r=40, b=50, t=50, pad=0))
     fig = go.Figure(data=traffic_light, layout=layout)
     out_file_name = 'sentiment_traffic_light.html'
-    plot(fig, filename=os.path.join(plot_output_dir, out_file_name),
+    plot(fig, filename=os.path.join(env.plot_output_dir, out_file_name),
          auto_open=auto_open)
 
 
@@ -235,7 +218,7 @@ def create_sentiment_plot(sentiment_df, response_variable, auto_open=False):
         y=sentiment_df['price'],
         mode='lines',
         line=dict(
-            color=(price_color),
+            color=(param.price_color),
             width=5),
         name='price'
     )
@@ -245,7 +228,7 @@ def create_sentiment_plot(sentiment_df, response_variable, auto_open=False):
         y=pos_y,
         mode='lines',
         line=dict(
-            color=(div_col_pallete[-1]),
+            color=(param.div_col_pallete[-1]),
             width=0),
         fill='tozeroy',
         name='positive force',
@@ -257,7 +240,7 @@ def create_sentiment_plot(sentiment_df, response_variable, auto_open=False):
         y=neg_y,
         mode='lines',
         line=dict(
-            color=(div_col_pallete[0]),
+            color=(param.div_col_pallete[0]),
             width=0),
         fill='tozeroy',
         name='negative force'
@@ -270,5 +253,5 @@ def create_sentiment_plot(sentiment_df, response_variable, auto_open=False):
     out_file_name = '{}_market_sentiments.html'.format(
         response_variable.lower())
     plot(fig,
-         filename=os.path.join(plot_output_dir, out_file_name),
+         filename=os.path.join(env.plot_output_dir, out_file_name),
          auto_open=auto_open)
