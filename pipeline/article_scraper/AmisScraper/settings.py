@@ -15,9 +15,7 @@ SPIDER_MODULES = ['AmisScraper.spiders']
 NEWSPIDER_MODULE = 'AmisScraper.spiders'
 
 
-LOG_STDOUT = True
-LOG_FILE = 'scrapy_output.log'
-
+LOG_STDOUT = False
 
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent

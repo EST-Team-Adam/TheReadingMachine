@@ -5,7 +5,7 @@ import pandas as pd
 forecast_period = 90
 holdout_period = 180
 response_variable = 'response'
-
+individual_price = ['Wheat', 'Maize', 'Barley', 'Soyabean', 'Rice']
 
 data_dir = os.environ['DATA_DIR']
 engine = create_engine(

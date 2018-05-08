@@ -489,7 +489,7 @@ def output():
                          log_dir='logs/{}'.format(date_today))
     model.train()
     model.predict()
-    model.plot_prediction(plot_output='tensorboard')
+    # model.plot_prediction(plot_output='tensorboard')
 
     # TODO (Michael): Should return the loss as well
     return model.prediction_df

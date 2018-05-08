@@ -15,7 +15,7 @@ process_directory = os.path.join(conf.get('core', 'process_folder'))
 default_args = {
     'owner': 'michael',
     'depends_on_past': False,
-    'start_date': datetime(2017, 11, 22),
+    'start_date': datetime(2018, 4, 20),
     'email': ['michael.kao@fao.org'],
     'email_on_failure': True,
     'email_on_retry': False,
@@ -106,27 +106,17 @@ data_harmonisation = BashOperator(bash_command=data_harmonisation_command,
                                   dag=dag)
 db_data_harmonisation = DummyOperator(task_id='db_data_harmonisation', dag=dag)
 
-
-# Build price model
+# Compute the market force
 # --------------------
-price_modelling_script_path = os.path.join(
-    process_directory, 'price_modelling/processor.py')
-price_modelling_command = 'python {}'.format(
-    price_modelling_script_path)
-price_modelling = BashOperator(bash_command=price_modelling_command,
-                               task_id='price_modelling',
-                               params=default_args,
-                               dag=dag)
-db_price_forecast = DummyOperator(task_id='db_price_forecast', dag=dag)
+compute_market_force_script_path = os.path.join(
+    process_directory, 'compute_market_force/processor.py')
+compute_market_force_command = 'python {}'.format(
+    compute_market_force_script_path)
+compute_market_force = BashOperator(bash_command=compute_market_force_command,
+                                    task_id='compute_market_force',
+                                    params=default_args,
+                                    dag=dag)
 
-# Sent email
-# --------------------
-# send_success_email = EmailOperator(
-#     task_id='send_success_email',
-#     to=default_args['email'],
-#     subject='The Reading Machine executed successfully',
-#     html_content='',
-#     dag=dag)
 
 ########################################################################
 # Create dependency
@@ -148,9 +138,4 @@ data_harmonisation.set_upstream(db_sentiment_scoring)
 data_harmonisation.set_upstream(db_topic_modelling)
 
 db_data_harmonisation.set_upstream(data_harmonisation)
-
-price_modelling.set_upstream(db_raw_price)
-price_modelling.set_upstream(db_data_harmonisation)
-db_price_forecast.set_upstream(price_modelling)
-
-# send_success_email.set_upstream(db_price_model)
+compute_market_force.set_upstream(db_data_harmonisation)

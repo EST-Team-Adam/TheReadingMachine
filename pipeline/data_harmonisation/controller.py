@@ -64,7 +64,7 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
 
     sentiment_scored_article = get_sentiment_scored_article()
     topic_modelled_article = get_topic_modelled_article()
-    igc_price = get_igc_price(response='GOI')
+    igc_price = get_igc_price()
 
     article_max_date = sentiment_scored_article[date_col].max()
     model_price = igc_price[(igc_price[date_col] >= model_start_date) &
