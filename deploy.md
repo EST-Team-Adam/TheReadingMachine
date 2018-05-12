@@ -48,6 +48,13 @@ Currently, the ideal instance size has not yet been determined,
 further optimisation is required. However, there are two known changes
 required for the deployment.
 
+After launching and ssh into the instance, update and install Docker as per tutorial.
+
+
+```
+sudo yum update -y && sudo yum install -y docker && sudo service docker start && sudo usermod -a -G docker ec2-user && exit
+```
+
 #### Increase DB size.
 
 Make sure to allocate at least 30GB of storage for the instance as
