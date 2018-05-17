@@ -7,13 +7,13 @@ from thereadingmachine.utils.airflow_extra import BashWrapperOperator
 
 # Load configuration
 process_directory = os.path.join(conf.get('core', 'process_folder'))
-
+airflow_start_date = os.getenv('AIRFLOW_START_DATE')
 
 # Set configure
 default_args = {
     'owner': 'michael',
     'depends_on_past': False,
-    'start_date': datetime(2018, 4, 20),
+    'start_date': datetime.strptime(airflow_start_date, '%Y-%m-%d'),
     'email': ['michael.kao@fao.org'],
     'email_on_failure': True,
     'email_on_retry': False,
