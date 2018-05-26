@@ -2,27 +2,12 @@ from __future__ import division
 import itertools
 import pandas as pd
 import string
+import thereadingmachine.parameter as param
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import SnowballStemmer
 from nltk import pos_tag
 from datetime import datetime
-
-
-# Manual invalid title and link
-maintenance_title = ['Reduced service at Agrimoney.com',
-                     'Apology to Agrimoney.com subscribers']
-
-irrelevant_link = ['https://www.euractiv.com/topics/news/?type_filter=video',
-                   'http://www.euractiv.com/topics/news/?type_filter=video',
-                   'http://www.euractiv.com/topics/news/?type_filter=news',
-                   'http://www.euractiv.com/topics/news/?type_filter=all',
-                   'https://www.euractiv.com/topics/news/?type_filter=all',
-                   'https://www.euractiv.com/topics/news/',
-                   'https://www.euractiv.com/topics/news/?type_filter=news',
-                   'http://www.euractiv.com/topics/news/',
-                   'https://www.euractiv.com/news/',
-                   'http://www.euractiv.com/news/']
 
 
 def scraper_post_processing(raw_articles, model_start_date, id_col='id',
@@ -47,11 +32,11 @@ def scraper_post_processing(raw_articles, model_start_date, id_col='id',
 
     # Remvoe entries that are associated with maintenance or service.
     processed_articles = processed_articles[~processed_articles[title_col].isin(
-        maintenance_title)]
+        param.maintenance_title)]
 
     # Remoe links that are not associated with news articles.
     processed_articles = processed_articles[~processed_articles[link_col].isin(
-        irrelevant_link)]
+        param.irrelevant_link)]
 
     # Subset the data only after the model_start_date
     processed_articles = processed_articles[processed_articles[date_col]

@@ -1,31 +1,12 @@
 from __future__ import division
-import os
 import pandas as pd
 import numpy as np
-from sqlalchemy import create_engine
 from datetime import timedelta
 from sklearn.linear_model import ElasticNetCV
 from statsmodels.nonparametric.smoothers_lowess import lowess
-import controller as ctr
-
-data_dir = os.environ['DATA_DIR']
-engine = create_engine(
-    'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-harmonised_table = 'HarmonisedData'
-
-# Model parameters
-filter_coef = 1
-bootstrapIteration = 50
-
-
-def get_harmonised_data():
-    ''' Function to load the harmonised data.
-    '''
-
-    harmonised_data = pd.read_sql(
-        'SELECT * FROM {}'.format(harmonised_table), engine,
-        parse_dates=['date'])
-    return harmonised_data
+import thereadingmachine.parameter as param
+import thereadingmachine.environment as env
+import thereadingmachine.utils.io as io
 
 
 def get_topic_variables():
@@ -33,7 +14,7 @@ def get_topic_variables():
     '''
 
     topic_variables = (
-        pd.read_sql('PRAGMA table_info(TopicModel)', engine)['name']
+        pd.read_sql('PRAGMA table_info(TopicModel)', env.engine)['name']
         .where(lambda x: x != 'id')
         .dropna()
         .tolist())
@@ -140,23 +121,23 @@ def train_bag_elasticnet(complete_data, forecast_period, holdout_period,
 def output():
     # Data extraction and processing
     topic_variables = get_topic_variables()
-    harmonised_data = get_harmonised_data()
-    harmonised_data.drop(ctr.individual_price, axis=1, inplace=True)
+    harmonised_data = io.read_table(env.harmonised_table)
+    harmonised_data.drop(param.price_variables, axis=1, inplace=True)
     transformed_data = (
         transform_harmonised_data(data=harmonised_data,
-                                  forecast_period=ctr.forecast_period,
+                                  forecast_period=param.forecast_period,
                                   topic_variables=topic_variables,
-                                  filter_coef=filter_coef,
-                                  response_variable=ctr.response_variable))
+                                  filter_coef=param.filter_coef,
+                                  response_variable=param.response_variable))
 
     # Model fitting
     smoothed_prediction = (
         train_bag_elasticnet(complete_data=transformed_data,
-                             forecast_period=ctr.forecast_period,
-                             holdout_period=ctr.holdout_period,
-                             bootstrapIteration=bootstrapIteration,
+                             forecast_period=param.forecast_period,
+                             holdout_period=param.holdout_period,
+                             bootstrapIteration=param.bootstrapIteration,
                              topic_variables=topic_variables,
-                             response_variable=ctr.response_variable))
+                             response_variable=param.response_variable))
 
     # TODO (Michael): Should return the loss as well
     return smoothed_prediction

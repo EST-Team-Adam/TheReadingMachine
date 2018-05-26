@@ -3,55 +3,28 @@ import io
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from sqlalchemy import create_engine
 from datetime import datetime
 from datetime import timedelta
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 from statsmodels.nonparametric.smoothers_lowess import lowess
-import controller as ctr
+import thereadingmachine.parameter as param
+import thereadingmachine.environment as env
+from thereadingmachine.utils.io import read_table
 
-topicModelTable = 'TopicModel'
-model_start_date = datetime(2010, 1, 1).date()
-
-# Model parameters
-feature_size = 100
-timestep_size = 90
-batch_size = 90
-num_layer = 2
-cell_size = 128
-learning_rate = 0.0001
-epochs = 300
-keep_prob = 0.75
-clipping_cap = 1.0
 
 # This is because the model needs timestep and forecast period ahead
 # data to make the first forecast.
-rnn_start_date = model_start_date - \
-    timedelta(days=timestep_size + ctr.forecast_period)
-
-
-def get_sentiment_scored_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    sentiment_scored_article = pd.read_sql(
-        'SELECT * FROM SentimentScoredArticle', engine,
-        parse_dates=['date'])
-    return sentiment_scored_article
+rnn_start_date = param.model_start_date - \
+    timedelta(days=param.timestep_size + param.forecast_period)
 
 
 def get_topic_modelled_article():
-    data_dir = os.environ['DATA_DIR']
-    engine = create_engine(
-        'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
-    topic_modelled_article = pd.read_sql(
-        'SELECT * FROM {}'.format(topicModelTable), engine)
+    topic_modelled_article = read_table(env.topic_model_table, dates=False)
     sclae_input = topic_modelled_article.drop('id', axis=1)
     scaled_topic = pd.DataFrame(preprocessing.scale(sclae_input),
                                 columns=sclae_input.columns)
     scaled_topic['id'] = topic_modelled_article['id']
-
     return scaled_topic
 
 
@@ -74,9 +47,9 @@ def harmonise_article(pos_sentiment_col='positive_sentiment',
     hamonised dataset for modeling.
 
     '''
-    sentiment_scored_article = get_sentiment_scored_article()
+    sentiment_scored_article = read_table(env.sentiment_scored_table)
     topic_modelled_article = get_topic_modelled_article()
-    igc_price = ctr.get_igc_price(response='GOI')
+    igc_price = read_table(env.price_table)
 
     article_max_date = sentiment_scored_article[date_col].max()
     model_price = igc_price[(igc_price[date_col] >= rnn_start_date) &
@@ -379,7 +352,7 @@ class SentimentRnn:
             self.prediction_df = pd.DataFrame(
                 {'date': complete_dates,
                  'prediction': smoothed_forecast,
-                 'forecastPeriod': ctr.forecast_period,
+                 'forecastPeriod': param.forecast_period,
                  'model': 'lstm_k_step'
                  })
 
@@ -469,23 +442,23 @@ def output():
                           id_col='id'))
     preprocessed_data, denormaliser = data_preprocess(
         data=harmonised_article,
-        feature_size=feature_size,
-        forecast_period=ctr.forecast_period)
+        feature_size=param.feature_size,
+        forecast_period=param.forecast_period)
 
     model = SentimentRnn(data=preprocessed_data,
                          response_col='GOI',
                          denormaliser=denormaliser,
-                         forecast_period=ctr.forecast_period,
-                         feature_size=feature_size,
-                         timestep_size=timestep_size,
-                         batch_size=batch_size,
-                         num_layer=num_layer,
-                         cell_size=cell_size,
-                         learning_rate=learning_rate,
-                         holdout_period=ctr.holdout_period,
-                         epochs=epochs,
-                         keep_prob=keep_prob,
-                         clipping_cap=clipping_cap,
+                         forecast_period=param.forecast_period,
+                         feature_size=param.feature_size,
+                         timestep_size=param.timestep_size,
+                         batch_size=param.batch_size,
+                         num_layer=param.num_layer,
+                         cell_size=param.cell_size,
+                         learning_rate=param.learning_rate,
+                         holdout_period=param.holdout_period,
+                         epochs=param.epochs,
+                         keep_prob=param.keep_prob,
+                         clipping_cap=param.clipping_cap,
                          log_dir='logs/{}'.format(date_today))
     model.train()
     model.predict()

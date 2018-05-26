@@ -9,10 +9,10 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'AmisScraper'
+BOT_NAME = 'news_scraper'
 
-SPIDER_MODULES = ['AmisScraper.spiders']
-NEWSPIDER_MODULE = 'AmisScraper.spiders'
+SPIDER_MODULES = ['thereadingmachine.scraper.news_scraper.spiders']
+NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 
 LOG_STDOUT = False
@@ -40,7 +40,7 @@ COOKIES_ENABLED = False
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'AmisScraper.pipelines.DuplicatesPipeline': 100,
-    'AmisScraper.pipelines.SanitizeArticlePipeline': 300,
-    'AmisScraper.pipelines.AmisJsonPipeline': 500
+    'thereadingmachine.scraper.news_scraper.pipelines.DuplicatesPipeline': 100,
+    'thereadingmachine.scraper.news_scraper.pipelines.SanitizeArticlePipeline': 300,
+    'thereadingmachine.scraper.news_scraper.pipelines.AmisJsonPipeline': 500
 }

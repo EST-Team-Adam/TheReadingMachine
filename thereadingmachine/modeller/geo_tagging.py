@@ -1,3 +1,4 @@
+import pandas as pd
 from collections import defaultdict
 # Create dictionary of countries
 
@@ -105,7 +106,7 @@ def geotag_article(articles, country_dict):
             })
 
     flattened_articles = flatten_geotagged_article(geotagged_articles)
-    return flattened_articles
+    return pd.DataFrame(flattened_articles)
 
 
 def flatten_geotagged_article(articles):

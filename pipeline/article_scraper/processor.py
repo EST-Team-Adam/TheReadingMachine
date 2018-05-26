@@ -1,8 +1,8 @@
-import controller as ctr
+import thereadingmachine.scraper.article_scraper as ctr
+import thereadingmachine.environment as env
 
 # 'bloomberg' removed temporarily.
-spiders = ['worldgrain', 'euractiv', 'agrimoney']
-ctr.scrap_articles(spiders)
+ctr.scrap_articles(env.spiders)
 
 # Save output file
-ctr.save_json_to_db(spiders)
+ctr.save_json_to_db(env.spiders)
