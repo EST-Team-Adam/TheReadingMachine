@@ -183,18 +183,40 @@ def create_sentiment_traffic_light(data, commodity_col='commodity',
 
     sent_level_color = [param.div_col_pallete[i - 1]
                         for i in data[sent_level_col]]
-    traffic_light = [go.Scatter(x=data[commodity_col],
-                                y=[0] *
-                                len(data[commodity_col]),
-                                marker={'color': sent_level_color,
-                                        'size': 100},
-                                mode='markers')]
+
+    num_class = len(param.div_col_pallete)
+    num_commodity = len(data[commodity_col].unique())
+
+    legend_x = [num_commodity] * num_class
+    legend_y = np.linspace(-0.7, 0.7, 5).tolist()
+    legend_marker_size = [40] * num_class
+    legend_text = ['Very Bearish', 'Bearish',
+                   'Neutral', 'Bullish', 'Very Bullish']
+    data_x = range(num_commodity)
+    data_y = [0] * num_commodity
+    data_marker_size = [150] * num_commodity
+    plot_marker = {'color': sent_level_color + param.div_col_pallete,
+                   'size': data_marker_size + legend_marker_size}
+
+    traffic_light = [go.Scatter(x=data_x + legend_x,
+                                y=data_y + legend_y,
+                                marker=plot_marker,
+                                mode='markers+text')]
+
+    legend_annotation = [dict(x=lx - 0.25, y=ly, text=lt, showarrow=False)
+                         for lx, ly, lt in zip(legend_x, legend_y, legend_text)]
+
     layout = go.Layout(yaxis=dict(range=[-1, 1],
                                   showgrid=False,
                                   zeroline=False,
                                   showticklabels=False),
-                       xaxis=dict(showgrid=False, tickfont=dict(size=15)),
-                       margin=go.Margin(l=40, r=40, b=50, t=50, pad=0))
+                       xaxis=dict(range=[-0.5, num_commodity + 0.5],
+                                  showgrid=False, tickfont=dict(size=15),
+                                  zeroline=False,
+                                  ticktext=data[commodity_col].tolist() + [''],
+                                  tickvals=range(0, num_commodity + 1)),
+                       annotations=legend_annotation,
+                       margin=go.Margin(l=40, r=10, b=50, t=50, pad=0))
     fig = go.Figure(data=traffic_light, layout=layout)
     out_file_name = 'sentiment_traffic_light.html'
     plot(fig, filename=os.path.join(env.plot_output_dir, out_file_name),
