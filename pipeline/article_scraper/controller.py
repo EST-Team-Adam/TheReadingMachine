@@ -55,5 +55,5 @@ def save_json_to_db(spiders, date_col='date'):
     flattened_article_df.to_sql(con=engine,
                                 name=target_data_table,
                                 index=False,
-                                if_exists='replace',
+                                if_exists='append',
                                 dtype=field_type)
