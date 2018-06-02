@@ -18,6 +18,7 @@ NEWSPIDER_MODULE = 'AmisScraper.spiders'
 LOG_STDOUT = True
 LOG_FILE = 'scrapy_output.log'
 
+SCRAPE_ONLY_NEW = True
 
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent
