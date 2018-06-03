@@ -17,6 +17,9 @@ NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 LOG_STDOUT = False
 
+# Add variable to store previous links
+SCRAPE_ONLY_NEW = True
+
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent
 # USER_AGENT = 'amisSpider (+http://www.yourdomain.com)'

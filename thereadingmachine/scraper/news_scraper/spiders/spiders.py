@@ -1,4 +1,7 @@
+import os
+import pandas as pd
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
+from thereadingmachine.scraper.news_scraper.settings import SCRAPE_ONLY_NEW
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from datetime import datetime
@@ -34,16 +37,46 @@ class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
         return links
 
 
-class BloombergSpider(CrawlSpider):
+class AmisCrawlSpider(CrawlSpider):
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(AmisCrawlSpider, self).__init__(*a, **kw)
+
+    def filter_links_already_seen(self, links):
+        '''Ignores previously seen links before scraping them
+        Taken from https://stackoverflow.com/questions/27649731/crawlspider-ignore-url-before-request
+        '''
+        for link in links:
+            if self.only_new and link.url in self.seen_links:
+                continue
+            else:
+                yield link
+
+
+class BloombergSpider(AmisCrawlSpider):
     name = 'bloomberg'
     allowed_domains = ['bloomberg.com']
     start_urls = ['http://www.bloomberg.com']
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/articles/)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
 
@@ -69,7 +102,7 @@ class BloombergSpider(CrawlSpider):
             pass
 
 
-class NoggersBlogSpider(CrawlSpider):
+class NoggersBlogSpider(AmisCrawlSpider):
     name = 'noggers'
     allowed_domains = ["nogger-noggersblog.blogspot.com",
                        "nogger-noggersblog.blogspot.co.id",
@@ -77,6 +110,7 @@ class NoggersBlogSpider(CrawlSpider):
     start_urls = ["http://nogger-noggersblog.blogspot.com/"]
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='((?!:).)*html$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
 
@@ -110,7 +144,7 @@ class NoggersBlogSpider(CrawlSpider):
             pass
 
 
-class WorldGrainSpider(CrawlSpider):
+class WorldGrainSpider(AmisCrawlSpider):
 
     def _parse_wg_date(self, ds):
         for fmt in ('%B %d, %Y', '%b. %d, %Y', '%m/%d/%Y'):
@@ -141,12 +175,15 @@ class WorldGrainSpider(CrawlSpider):
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/news_home/)((?!:).)*$',
                                           deny='(m.world-grain.com)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news_home/)((?!:).)*$',
                                           deny='(m.world-grain.com)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/articles/)((?!:).)*$',
                                           deny='(m.world-grain.com)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
 
@@ -179,15 +216,17 @@ class WorldGrainSpider(CrawlSpider):
         return item
 
 
-class EuractivSpider(CrawlSpider):
+class EuractivSpider(AmisCrawlSpider):
     name = 'euractiv'
     # logf = open('logs/euractiv.log', 'w')
     allowed_domains = ['www.euractiv.com']
     start_urls = ['http://www.euractiv.com']
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='(/agriculture-food/news/)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*$'),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
 
@@ -217,7 +256,7 @@ class EuractivSpider(CrawlSpider):
             # {1}\n'.format(str(response.url), str(e)))
 
 
-class AgriMoneySpider(CrawlSpider):
+class AgriMoneySpider(AmisCrawlSpider):
     name = 'agrimoney'
     # logf = open('logs/agrimoney.log', 'w')
     allowed_domains = ['www.agrimoney.com']
@@ -233,12 +272,15 @@ class AgriMoneySpider(CrawlSpider):
     rules = [
         Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*html$',
                                           deny=deny_links),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/feature/)((?!:).)*html$',
                                           deny=deny_links),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True),
         Rule(UnicodeFriendlyLinkExtractor(allow='(/marketreport/)((?!:).)*html$',
                                           deny=deny_links),
+             process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
 
