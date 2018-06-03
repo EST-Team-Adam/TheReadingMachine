@@ -3,7 +3,8 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 # Spiders for scraper
-spiders = ['worldgrain', 'euractiv', 'agrimoney']
+# MG: agrimoney now is not anymore freely available, such as bloomberg
+spiders = ['worldgrain', 'euractiv']
 
 # Data directory and engine
 data_dir = os.environ['DATA_DIR']
