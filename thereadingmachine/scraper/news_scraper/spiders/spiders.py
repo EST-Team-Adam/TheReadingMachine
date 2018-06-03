@@ -2,7 +2,6 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
-from thereadingmachine.scraper.news_scraper.settings import SCRAPE_ONLY_NEW
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from datetime import datetime
