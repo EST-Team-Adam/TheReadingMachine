@@ -58,11 +58,10 @@ def save_json_to_db(spiders, date_col='date'):
             raise TypeError(
                 'source file for spider "{}" does not exist'.format(spider))
 
-<<<<<<< HEAD:thereadingmachine/scraper/article_scraper.py
         flattened_article_df.to_sql(con=engine,
                                     name=target_data_table,
                                     index=False,
-                                    if_exists='replace',
+                                    if_exists='append',
                                     dtype=field_type)
         # Delete old files
         #
@@ -75,10 +74,3 @@ def save_json_to_db(spiders, date_col='date'):
             scraper_output_path, old_file_name)
         if os.path.isfile(old_file_path):
             os.remove(old_file_path)
-=======
-    flattened_article_df.to_sql(con=engine,
-                                name=target_data_table,
-                                index=False,
-                                if_exists='append',
-                                dtype=field_type)
->>>>>>> Making sure we don't overwrite:pipeline/article_scraper/controller.py
