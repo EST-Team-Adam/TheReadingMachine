@@ -45,5 +45,5 @@ COOKIES_ENABLED = False
 ITEM_PIPELINES = {
     'thereadingmachine.scraper.news_scraper.pipelines.DuplicatesPipeline': 100,
     'thereadingmachine.scraper.news_scraper.pipelines.SanitizeArticlePipeline': 300,
-    'thereadingmachine.scraper.news_scraper.pipelines.AmisJsonPipeline': 500
+    'thereadingmachine.scraper.news_scraper.pipelines.AmisScrapePipeline': 500
 }
