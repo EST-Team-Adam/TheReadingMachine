@@ -16,6 +16,9 @@ NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 
 LOG_STDOUT = False
+LOG_FILE = 'scrapy_output.log'
+
+SCRAPE_ONLY_NEW = True
 
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent
