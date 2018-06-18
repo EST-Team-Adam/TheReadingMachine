@@ -1,19 +1,19 @@
 import os
 from airflow import DAG
 from airflow import configuration as conf
+from airflow.utils.dates import days_ago
 from airflow.operators.dummy_operator import DummyOperator
-from datetime import datetime, timedelta
+from datetime import timedelta
 from thereadingmachine.utils.airflow_extra import BashWrapperOperator
 
 # Load configuration
 process_directory = os.path.join(conf.get('core', 'process_folder'))
-airflow_start_date = os.getenv('AIRFLOW_START_DATE')
 
 # Set configure
 default_args = {
     'owner': 'michael',
     'depends_on_past': False,
-    'start_date': datetime.strptime(airflow_start_date, '%Y-%m-%d'),
+    'start_date': days_ago(1),
     'email': ['michael.kao@fao.org'],
     'email_on_failure': True,
     'email_on_retry': False,
