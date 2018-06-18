@@ -16,6 +16,7 @@ NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 
 LOG_STDOUT = False
+LOG_LEVEL = 'ERROR'
 
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent
