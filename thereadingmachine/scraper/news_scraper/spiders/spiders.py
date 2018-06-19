@@ -37,7 +37,7 @@ class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
         return links
 
 
-class AmisCrawlSpider(CrawlSpider):
+class FiltersLinks(object):
 
     def __init__(self, *a, **kw):
         '''Initialize the full set of seen links
@@ -64,7 +64,7 @@ class AmisCrawlSpider(CrawlSpider):
                 yield link
 
 
-class BloombergSpider(AmisCrawlSpider):
+class BloombergSpider(CrawlSpider, FiltersLinks):
     name = 'bloomberg'
     allowed_domains = ['bloomberg.com']
     start_urls = ['http://www.bloomberg.com']
@@ -102,7 +102,7 @@ class BloombergSpider(AmisCrawlSpider):
             pass
 
 
-class NoggersBlogSpider(AmisCrawlSpider):
+class NoggersBlogSpider(CrawlSpiderk, FiltersLinks):
     name = 'noggers'
     allowed_domains = ["nogger-noggersblog.blogspot.com",
                        "nogger-noggersblog.blogspot.co.id",
@@ -144,7 +144,7 @@ class NoggersBlogSpider(AmisCrawlSpider):
             pass
 
 
-class WorldGrainSpider(AmisCrawlSpider):
+class WorldGrainSpider(CrawlSpider, FiltersLinks):
 
     def _parse_wg_date(self, ds):
         for fmt in ('%B %d, %Y', '%b. %d, %Y', '%m/%d/%Y'):
@@ -216,7 +216,7 @@ class WorldGrainSpider(AmisCrawlSpider):
         return item
 
 
-class EuractivSpider(AmisCrawlSpider):
+class EuractivSpider(CrawlSpider, FiltersLinks):
     name = 'euractiv'
     # logf = open('logs/euractiv.log', 'w')
     allowed_domains = ['www.euractiv.com']
@@ -256,7 +256,7 @@ class EuractivSpider(AmisCrawlSpider):
             # {1}\n'.format(str(response.url), str(e)))
 
 
-class AgriMoneySpider(AmisCrawlSpider):
+class AgriMoneySpider(CrawlSpider, FiltersLinks):
     name = 'agrimoney'
     # logf = open('logs/agrimoney.log', 'w')
     allowed_domains = ['www.agrimoney.com']
