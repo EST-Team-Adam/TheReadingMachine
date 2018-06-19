@@ -51,7 +51,6 @@ class FiltersLinks(object):
         link_query = 'SELECT DISTINCT link FROM RawArticle'
         self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
 
-        super(AmisCrawlSpider, self).__init__(*a, **kw)
 
     def filter_links_already_seen(self, links):
         '''Ignores previously seen links before scraping them
@@ -79,6 +78,20 @@ class BloombergSpider(CrawlSpider, FiltersLinks):
              process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(BloombergSpider, self).__init__(*a, **kw)
 
     def parse_item(self, response):
         item = NewsArticleItem()
@@ -113,6 +126,20 @@ class NoggersBlogSpider(CrawlSpiderk, FiltersLinks):
              process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(NoggersSpider, self).__init__(*a, **kw)
 
     def parse_item(self, response):
         item = NewsArticleItem()
@@ -187,6 +214,20 @@ class WorldGrainSpider(CrawlSpider, FiltersLinks):
              callback='parse_item', follow=True)
     ]
 
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(WorldGrainSpider, self).__init__(*a, **kw)
+
     def parse_item(self, response):
         item = NewsArticleItem()
         title = response.xpath('//title/text()').extract_first()
@@ -229,6 +270,20 @@ class EuractivSpider(CrawlSpider, FiltersLinks):
              process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(EuractivSpider, self).__init__(*a, **kw)
 
     def parse_item(self, response):
         item = NewsArticleItem()
@@ -283,6 +338,20 @@ class AgriMoneySpider(CrawlSpider, FiltersLinks):
              process_links='filter_links_already_seen',
              callback='parse_item', follow=True)
     ]
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = SCRAPE_ONLY_NEW
+
+        data_dir = os.environ['DATA_DIR']
+        engine = create_engine(
+            'sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+        link_query = 'SELECT DISTINCT link FROM RawArticle'
+        self.seen_links = set(pd.read_sql(link_query, engine).link.unique())
+
+        super(AgriMoneySpider, self).__init__(*a, **kw)
 
     def parse_item(self, response):
         cleaned_response = response.replace(
