@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 # Spiders for scraper
-spiders = ['worldgrain', 'euractiv', 'agrimoney']
+spiders = ['worldgrain', 'euractiv']
 
 # Data directory and engine
 data_dir = os.environ['DATA_DIR']
@@ -26,6 +26,14 @@ price_table = 'PriceIGC'
 market_force_table = 'MarketForce'
 
 # Table field type
+raw_article_field_type = {
+    'source': sqlalchemy.types.Unicode(length=255),
+    'title': sqlalchemy.types.Unicode(length=255),
+    'date': sqlalchemy.types.Date(),
+    'link': sqlalchemy.types.Unicode(length=255),
+    'article': sqlalchemy.types.UnicodeText
+}
+
 processed_article_field_type = {
     'id': sqlalchemy.types.Integer(),
     'date': sqlalchemy.types.Date(),
