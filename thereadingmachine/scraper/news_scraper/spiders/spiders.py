@@ -1,17 +1,22 @@
-from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
+import pandas as pd
 from datetime import datetime
+from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
+from scrapy.utils.project import get_project_settings
+from scrapy.http import HtmlResponse
+import thereadingmachine.environment as env
+from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 
 
 class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
-    '''
-    Need this to fix the encoding error.
-    Taken from https://stackoverflow.com/questions/17862016/scrapy-python-unicode-links-error
+    '''Need this to fix the encoding error.
+
+    Taken from
+    https://stackoverflow.com/questions/17862016/scrapy-python-unicode-links-error
+
     '''
 
     def extract_links(self, response):
@@ -34,7 +39,45 @@ class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
         return links
 
 
-class BloombergSpider(CrawlSpider):
+class AmisCrawlSpider(CrawlSpider):
+
+    def __init__(self, *a, **kw):
+        '''Initialize the full set of seen links
+        '''
+
+        self.only_new = get_project_settings().get('SCRAPE_ONLY_NEW')
+        if self.only_new:
+            # NOTE (Michael): This is to account for first time check when
+            #                 the table does not exist.
+            try:
+                link_query = 'SELECT DISTINCT link FROM RawArticle'
+                self.seen_links = set(pd.read_sql(
+                    link_query, env.engine).link.unique())
+                print('{} links scraped in previous rounds'.format(
+                    len(self.seen_links)))
+            except:
+                self.seen_links = set()
+        else:
+            self.seen_links = set()
+
+        super(AmisCrawlSpider, self).__init__(*a, **kw)
+
+    def _requests_to_follow(self, response):
+        if not isinstance(response, HtmlResponse):
+            return
+        seen = self.seen_links
+        for n, rule in enumerate(self._rules):
+            links = [lnk for lnk in rule.link_extractor.extract_links(response)
+                     if lnk not in seen]
+            if links and rule.process_links:
+                links = rule.process_links(links)
+            for link in links:
+                seen.add(link)
+                r = self._build_request(n, link)
+                yield rule.process_request(r)
+
+
+class BloombergSpider(AmisCrawlSpider):
     name = 'bloomberg'
     allowed_domains = ['bloomberg.com']
     start_urls = ['http://www.bloomberg.com']
@@ -69,7 +112,7 @@ class BloombergSpider(CrawlSpider):
             pass
 
 
-class NoggersBlogSpider(CrawlSpider):
+class NoggersBlogSpider(AmisCrawlSpider):
     name = 'noggers'
     allowed_domains = ["nogger-noggersblog.blogspot.com",
                        "nogger-noggersblog.blogspot.co.id",
@@ -110,7 +153,7 @@ class NoggersBlogSpider(CrawlSpider):
             pass
 
 
-class WorldGrainSpider(CrawlSpider):
+class WorldGrainSpider(AmisCrawlSpider):
 
     def _parse_wg_date(self, ds):
         for fmt in ('%B %d, %Y', '%b. %d, %Y', '%m/%d/%Y'):
@@ -135,7 +178,7 @@ class WorldGrainSpider(CrawlSpider):
 
     name = 'worldgrain'
     allowed_domains = ['world-grain.com']
-    start_urls = ['http://www.world-grain.com'] + \
+    start_urls = ['http://www.world-grain.com'] +
         ['http://www.world-grain.com/News/Archive.aspx?page={0}&year={1}&month=0'.format(i, j)
          for i in range(1, 100) for j in range(2006, 2017)]
     rules = [
@@ -179,7 +222,7 @@ class WorldGrainSpider(CrawlSpider):
         return item
 
 
-class EuractivSpider(CrawlSpider):
+class EuractivSpider(AmisCrawlSpider):
     name = 'euractiv'
     # logf = open('logs/euractiv.log', 'w')
     allowed_domains = ['www.euractiv.com']
@@ -213,11 +256,9 @@ class EuractivSpider(CrawlSpider):
             return item
         except Exception as e:
             pass
-            # self.logf.write('Failed to scrape {0}:
-            # {1}\n'.format(str(response.url), str(e)))
 
 
-class AgriMoneySpider(CrawlSpider):
+class AgriMoneySpider(AmisCrawlSpider):
     name = 'agrimoney'
     # logf = open('logs/agrimoney.log', 'w')
     allowed_domains = ['www.agrimoney.com']
@@ -243,10 +284,12 @@ class AgriMoneySpider(CrawlSpider):
     ]
 
     def parse_item(self, response):
-        cleaned_response = response.replace(
-            body=response.body_as_unicode().encode('utf-8', 'ignore'),
-            encoding='utf-8'
-        )
+        # NOTE (Michael): This is not used, review required.
+        #
+        # cleaned_response = response.replace(
+        #     body=response.body_as_unicode().encode('utf-8', 'ignore'),
+        #     encoding='utf-8'
+        # )
         item = NewsArticleItem()
         try:
             title = response.xpath(
@@ -282,5 +325,3 @@ class AgriMoneySpider(CrawlSpider):
                     return item
                 except Exception as e:
                     pass
-                    # self.logf.write('Failed to scrape {0}: {1}\n'.format(
-                    #    str(response.url), str(e)))

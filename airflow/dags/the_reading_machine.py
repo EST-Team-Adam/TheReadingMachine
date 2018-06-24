@@ -13,7 +13,7 @@ process_directory = os.path.join(conf.get('core', 'process_folder'))
 default_args = {
     'owner': 'michael',
     'depends_on_past': False,
-    'start_date': days_ago(1),
+    'start_date': days_ago(0),
     'email': ['michael.kao@fao.org'],
     'email_on_failure': True,
     'email_on_retry': False,
@@ -25,7 +25,7 @@ default_args = {
 # Create dag
 dag = DAG('the_reading_machine',
           default_args=default_args,
-          schedule_interval='@daily')
+          schedule_interval='0 */4 * * *')
 
 ########################################################################
 # Create nodes
