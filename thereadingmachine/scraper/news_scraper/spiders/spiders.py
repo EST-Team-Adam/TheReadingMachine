@@ -178,7 +178,7 @@ class WorldGrainSpider(AmisCrawlSpider):
 
     name = 'worldgrain'
     allowed_domains = ['world-grain.com']
-    start_urls = ['http://www.world-grain.com'] +
+    start_urls = ['http://www.world-grain.com'] + \
         ['http://www.world-grain.com/News/Archive.aspx?page={0}&year={1}&month=0'.format(i, j)
          for i in range(1, 100) for j in range(2006, 2017)]
     rules = [
