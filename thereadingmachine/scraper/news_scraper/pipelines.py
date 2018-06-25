@@ -11,13 +11,20 @@ import json
 import threading
 from scrapy.exceptions import DropItem
 from datetime import datetime
+import pandas as pd
+import sqlalchemy
+from sqlalchemy import create_engine
 
-data_dir = os.environ['DATA_DIR']
-scraper_file_prefix = os.environ['SCRAPER_FILE_PREFIX']
-scraper_output_path = os.path.join(data_dir, 'scraper_output')
 
-if not os.path.exists(scraper_output_path):
-    os.makedirs(scraper_output_path)
+# Configuration
+target_data_table = 'RawArticle'
+engine = create_engine('sqlite:///{0}/the_reading_machine.db'.format(data_dir))
+
+field_type = {'source': sqlalchemy.types.Unicode(length=255),
+              'title': sqlalchemy.types.Unicode(length=255),
+              'date': sqlalchemy.types.Date(),
+              'link': sqlalchemy.types.Unicode(length=255),
+              'article': sqlalchemy.types.UnicodeText}
 
 
 class DuplicatesPipeline(object):
@@ -69,35 +76,28 @@ class SanitizeArticlePipeline(object):
             raise DropItem('Empty Article in %s' % item)
 
 
-class AmisJsonPipeline(object):
+class AmisScrapePipeline(object):
 
     def __init__(self):
-        self.datafiles = {}
+        self.data_frames = {}
         self.today = datetime.today()
 
     def open_spider(self, spider):
-        if spider.name not in self.datafiles.keys():
-            target_file_name = '{}_{}_{}.jsonl'.format(
-                scraper_file_prefix, self.today.strftime('%Y_%m_%d'), spider.name)
-            target_file_path = os.path.join(
-                scraper_output_path, target_file_name)
-            self.datafiles[spider.name] = open(target_file_path, 'a')
-        self.lock = threading.Lock()
+        if spider.name not in self.data_frames.keys():
+            self.data_frames[spider.name] = pd.DataFrame()
 
     def process_item(self, item, spider):
-        # spider.logger.info('Processing Item: ' + item['title'])
-        self.lock.acquire()
         try:
             item_dict = dict(item)
             item_dict['source'] = spider.name
-            line = json.dumps(item_dict, ensure_ascii=False) + '\n'
-            self.datafiles[spider.name].write(line)
-            # spider.logger.info('Written Item: ' + item['title'])
+            self.data_frames[spider.name].append(current_source, ignore_index=True))
         except (UnicodeDecodeError, UnicodeEncodeError):
             raise DropItem('Formatting Error in %s' % item)
-        self.lock.release()
         return item
 
     def close_spider(self, spider):
-        for datafile in self.datafiles.values():
-            datafile.close()
+        self.data_frames[spider.name].to_sql(con=engine,
+            name=target_data_table,
+            index=False,
+            if_exists='append',
+            dtype=field_type)
