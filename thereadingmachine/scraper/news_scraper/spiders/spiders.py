@@ -72,7 +72,7 @@ class AmisCrawlSpider(CrawlSpider):
             # NOTE (Michael): This is to check the unparsed link.
             with open('{}/unparsed_link.csv'.format(env.data_dir), 'ab') as resultFile:
                 wr = csv.writer(resultFile, dialect='excel')
-                [wr.writerow(lnk, rule.process_links(lnk))
+                [wr.writerow([lnk, rule.process_links(lnk)])
                  for lnk in rule.link_extractor.extract_links(response)]
 
             links = [lnk for lnk in rule.link_extractor.extract_links(response)
