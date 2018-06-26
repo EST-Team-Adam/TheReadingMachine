@@ -1,7 +1,9 @@
+import csv
 import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
+# from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
@@ -67,6 +69,12 @@ class AmisCrawlSpider(CrawlSpider):
             return
         seen = self.seen_links
         for n, rule in enumerate(self._rules):
+            # NOTE (Michael): This is to check the unparsed link.
+            with open('{}.unparsed_link.csv'.format(env.data_dir)) as resultFile:
+                wr = csv.writer(resultFile, dialect='excel')
+                wr.writerow(
+                    [lnk for lnk in rule.link_extractor.extract_links(response)])
+
             links = [lnk for lnk in rule.link_extractor.extract_links(response)
                      if lnk not in seen]
             if links and rule.process_links:
