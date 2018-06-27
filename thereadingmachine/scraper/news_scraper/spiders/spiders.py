@@ -69,26 +69,12 @@ class AmisCrawlSpider(CrawlSpider):
             return
         seen = self.seen_links
         for n, rule in enumerate(self._rules):
-            # NOTE (Michael): This is to check the unparsed link.
-            # with open('{}/unparsed_link.csv'.format(env.data_dir), 'ab') as resultFile:
-            #     wr = csv.writer(resultFile, dialect='excel')
-            #     [wr.writerow([lnk, rule.process_links(lnk)])
-            #      for lnk in rule.link_extractor.extract_links(response)
-            #      if lnk is not None]
-
-            raw_links = [lnk
-                         for lnk in rule.link_extractor.extract_links(response)]
-            if raw_links and rule.process_links:
-                processed_links = rule.process_links(raw_links)
-                with open('{}/unparsed_link.csv'.format(env.data_dir), 'ab') as resultFile:
-                    wr = csv.writer(resultFile, dialect='excel')
-                    [wr.writerow([r, p])
-                     for r, p in zip(raw_links, processed_links)]
-
-            links = [lnk for lnk in rule.link_extractor.extract_links(response)
-                     if lnk not in seen]
+            links = [lnk
+                     for lnk in rule.link_extractor.extract_links(response)]
             if links and rule.process_links:
                 links = rule.process_links(links)
+                # NOTE (Michael): Filter link after it has been processed.
+                links = [link for link in links if link not in seen]
             for link in links:
                 seen.add(link)
                 r = self._build_request(n, link)
