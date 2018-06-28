@@ -2,8 +2,7 @@ import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
-# from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
+from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
 from scrapy.utils.project import get_project_settings
@@ -12,7 +11,7 @@ import thereadingmachine.environment as env
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 
 
-class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
+class UnicodeFriendlyLinkExtractor(LxmlLinkExtractor):
     '''Need this to fix the encoding error.
 
     Taken from
@@ -104,8 +103,6 @@ class BloombergSpider(AmisCrawlSpider):
         try:
             item['title'] = title
             item['article'] = article
-            # item['link'] = response.url.replace(
-            #     'http://', '').replace('https://', '')
             item['link'] = response.url
             raw_date = response.url.split('/')[-2]
             date = datetime.strptime(raw_date, '%Y-%m-%d')
@@ -133,11 +130,6 @@ class NoggersBlogSpider(AmisCrawlSpider):
         self.logger.info('Scraping Title: ' + title)
         item['title'] = title
         item['article'] = article
-        # item['link'] = (
-        #     response.url
-        #     .replace('http://', '')
-        #     .replace('https://', '')
-        #     .replace("blogspot.co.id", "blogspot.com"))
         item['link'] = response.url
 
         try:
@@ -211,8 +203,6 @@ class WorldGrainSpider(AmisCrawlSpider):
         self.logger.info('Scraping Title: ' + title)
         item['title'] = title
         item['article'] = article
-        # item['link'] = response.url.replace(
-        #     'http://', '').replace('https://', '')
         item['link'] = response.url
 
         raw_date = (response.xpath('//span[@class="news_article_date"]/text()')
@@ -229,7 +219,6 @@ class WorldGrainSpider(AmisCrawlSpider):
 
 class EuractivSpider(AmisCrawlSpider):
     name = 'euractiv'
-    # logf = open('logs/euractiv.log', 'w')
     allowed_domains = ['www.euractiv.com']
     start_urls = ['http://www.euractiv.com']
     rules = [
@@ -246,8 +235,6 @@ class EuractivSpider(AmisCrawlSpider):
             article = response.xpath('//p/text()').extract()
             item['title'] = title
             item['article'] = article
-            # item['link'] = response.url.replace(
-            #     'http://', '').replace('https://', '')
             item['link'] = response.url
         except UnicodeDecodeError:
             pass
@@ -307,8 +294,6 @@ class AgriMoneySpider(AmisCrawlSpider):
                 'Agrimoney.com | ', '').encode('utf-8', 'ignore')
             item['article'] = [art.encode(
                 'utf-8') for art in response.xpath('//body//text()').extract()]
-            # item['link'] = response.url.replace(
-            #     'http://', '').replace('https://', '').encode('utf-8', 'ignore')
             item['link'] = response.url
         except UnicodeDecodeError:
             pass
