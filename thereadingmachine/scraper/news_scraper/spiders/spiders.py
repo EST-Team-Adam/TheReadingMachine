@@ -74,6 +74,7 @@ class AmisCrawlSpider(CrawlSpider):
             if links and rule.process_links:
                 links = rule.process_links(links)
                 print(links[0])
+                print(seen[0])
                 # NOTE (Michael): Filter link after it has been processed.
                 links = [link for link in links if link not in seen]
                 print(links[0])
