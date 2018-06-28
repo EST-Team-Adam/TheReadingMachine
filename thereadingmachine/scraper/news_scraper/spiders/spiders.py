@@ -1,4 +1,3 @@
-import csv
 import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
@@ -70,7 +69,8 @@ class AmisCrawlSpider(CrawlSpider):
         seen = self.seen_links
         for n, rule in enumerate(self._rules):
             links = [lnk
-                     for lnk in rule.link_extractor.extract_links(response)]
+                     for lnk in rule.link_extractor.extract_links(response)
+                     if not seen]
             if links and rule.process_links:
                 links = rule.process_links(links)
                 print('First link seen (Processed): {}'.format(links[0]))
@@ -108,8 +108,9 @@ class BloombergSpider(AmisCrawlSpider):
         try:
             item['title'] = title
             item['article'] = article
-            item['link'] = response.url.replace(
-                'http://', '').replace('https://', '')
+            # item['link'] = response.url.replace(
+            #     'http://', '').replace('https://', '')
+            item['link'] = response.url
             raw_date = response.url.split('/')[-2]
             date = datetime.strptime(raw_date, '%Y-%m-%d')
             item['date'] = str(date)
@@ -136,11 +137,12 @@ class NoggersBlogSpider(AmisCrawlSpider):
         self.logger.info('Scraping Title: ' + title)
         item['title'] = title
         item['article'] = article
-        item['link'] = (
-            response.url
-            .replace('http://', '')
-            .replace('https://', '')
-            .replace("blogspot.co.id", "blogspot.com"))
+        # item['link'] = (
+        #     response.url
+        #     .replace('http://', '')
+        #     .replace('https://', '')
+        #     .replace("blogspot.co.id", "blogspot.com"))
+        item['link'] = response.url
 
         try:
             token = filter(lambda x: '--' in x, article)
@@ -213,8 +215,9 @@ class WorldGrainSpider(AmisCrawlSpider):
         self.logger.info('Scraping Title: ' + title)
         item['title'] = title
         item['article'] = article
-        item['link'] = response.url.replace(
-            'http://', '').replace('https://', '')
+        # item['link'] = response.url.replace(
+        #     'http://', '').replace('https://', '')
+        item['link'] = response.url
 
         raw_date = (response.xpath('//span[@class="news_article_date"]/text()')
                     .extract_first()
@@ -247,8 +250,9 @@ class EuractivSpider(AmisCrawlSpider):
             article = response.xpath('//p/text()').extract()
             item['title'] = title
             item['article'] = article
-            item['link'] = response.url.replace(
-                'http://', '').replace('https://', '')
+            # item['link'] = response.url.replace(
+            #     'http://', '').replace('https://', '')
+            item['link'] = response.url
         except UnicodeDecodeError:
             pass
 
@@ -307,8 +311,9 @@ class AgriMoneySpider(AmisCrawlSpider):
                 'Agrimoney.com | ', '').encode('utf-8', 'ignore')
             item['article'] = [art.encode(
                 'utf-8') for art in response.xpath('//body//text()').extract()]
-            item['link'] = response.url.replace(
-                'http://', '').replace('https://', '').encode('utf-8', 'ignore')
+            # item['link'] = response.url.replace(
+            #     'http://', '').replace('https://', '').encode('utf-8', 'ignore')
+            item['link'] = response.url
         except UnicodeDecodeError:
             pass
         try:
