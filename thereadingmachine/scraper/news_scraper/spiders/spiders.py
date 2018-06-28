@@ -70,13 +70,9 @@ class AmisCrawlSpider(CrawlSpider):
         for n, rule in enumerate(self._rules):
             links = [lnk
                      for lnk in rule.link_extractor.extract_links(response)
-                     if not seen]
+                     if lnk not in seen]
             if links and rule.process_links:
                 links = rule.process_links(links)
-                print('First link seen (Processed): {}'.format(links[0]))
-                print('First link previously extracted: {}'.format(seen[0]))
-                # NOTE (Michael): Filter link after it has been processed.
-                links = [link for link in links if link not in seen]
             for link in links:
                 seen.add(link)
                 r = self._build_request(n, link)
