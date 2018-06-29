@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
-from scrapy.linkextractors.lxmlhtml import SgmlLinkExtractor
+from scrapy.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
 from scrapy.utils.project import get_project_settings
