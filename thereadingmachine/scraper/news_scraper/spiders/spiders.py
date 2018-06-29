@@ -7,6 +7,7 @@ from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
 from scrapy.utils.project import get_project_settings
 from scrapy.http import HtmlResponse
+from scrapy.link import Link
 import thereadingmachine.environment as env
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 
@@ -51,8 +52,9 @@ class AmisCrawlSpider(CrawlSpider):
             #                 the table does not exist.
             try:
                 link_query = 'SELECT DISTINCT link FROM RawArticle'
-                self.seen_links = set(pd.read_sql(
-                    link_query, env.engine).link.unique())
+                link_from_db = pd.read_sql(link_query, env.engine)
+                self.seen_links = set([Link(link)
+                                       for link in link_from_db.link])
                 print('{} links scraped in previous rounds'.format(
                     len(self.seen_links)))
             except:
