@@ -324,9 +324,9 @@ class SuccessfulFarmingSpider(AmisCrawlSpider):
 
     name = 'successfulfarming'
     allowed_domains = ['www.agriculture.com']
-    start_urls = ['http://www.agriculture.com/markets/analysis']
+    start_urls = ['http://www.agriculture.com/']
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/markets/analysis/)((?!:).)*$'),
+        Rule(UnicodeFriendlyLinkExtractor(),
              callback='parse_item',
              follow=True)
     ]
