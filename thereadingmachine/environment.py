@@ -3,7 +3,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 
 # Spiders for scraper
-spiders = ['worldgrain', 'euractiv']
+spiders = ['worldgrain', 'euractiv', 'successfulfarming']
 
 # Data directory and engine
 data_dir = os.environ['DATA_DIR']

@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
-from scrapy.linkextractors.sgml import SgmlLinkExtractor
+from scrapy.linkextractors import LinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
 from scrapy.utils.project import get_project_settings
@@ -12,7 +12,7 @@ import thereadingmachine.environment as env
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 
 
-class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
+class UnicodeFriendlyLinkExtractor(LinkExtractor):
     '''Need this to fix the encoding error.
 
     Taken from
@@ -255,7 +255,6 @@ class EuractivSpider(AmisCrawlSpider):
 
 class AgriMoneySpider(AmisCrawlSpider):
     name = 'agrimoney'
-    # logf = open('logs/agrimoney.log', 'w')
     allowed_domains = ['www.agrimoney.com']
     start_urls = [
         'http://www.agrimoney.com',
@@ -319,3 +318,34 @@ class AgriMoneySpider(AmisCrawlSpider):
                     return item
                 except Exception as e:
                     pass
+
+
+class SuccessfulFarmingSpider(AmisCrawlSpider):
+
+    name = 'successfulfarming'
+    allowed_domains = ['www.agriculture.com']
+    start_urls = ['http://www.agriculture.com/markets/analysis']
+    rules = [
+        Rule(UnicodeFriendlyLinkExtractor(allow='(/markets/analysis/)((?!:).)*$'),
+             callback='parse_item',
+             follow=True)
+    ]
+
+    def parse_item(self, response):
+        item = NewsArticleItem()
+        try:
+            title = response.xpath('//title/text()').extract()
+            article = ' '.join(response.xpath(
+                '//div[@class="field-body"]/p/text()').extract())
+            # print(article)
+            raw_date = response.xpath(
+                '//div[@class="byline-date"]/text()').extract()
+            date = datetime.strptime(raw_date, '%m/%d/%Y')
+            item['title'] = title
+            item['article'] = article
+            item['date'] = str(date)
+            item['link'] = response.url
+            print(item)
+            return item
+        except Exception as e:
+            pass
