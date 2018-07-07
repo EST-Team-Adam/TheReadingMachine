@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.selector import HtmlXPathSelector
-from scrapy.linkextractors import LinkExtractor
+from scrapy.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.utils.response import get_base_url
 from scrapy.exceptions import DropItem
 from scrapy.utils.project import get_project_settings
@@ -12,7 +12,7 @@ import thereadingmachine.environment as env
 from thereadingmachine.scraper.news_scraper.items import NewsArticleItem
 
 
-class UnicodeFriendlyLinkExtractor(LinkExtractor):
+class UnicodeFriendlyLinkExtractor(SgmlLinkExtractor):
     '''Need this to fix the encoding error.
 
     Taken from
