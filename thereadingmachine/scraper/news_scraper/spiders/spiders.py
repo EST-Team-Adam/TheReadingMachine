@@ -334,19 +334,16 @@ class SuccessfulFarmingSpider(AmisCrawlSpider):
     def parse_item(self, response):
         item = NewsArticleItem()
         try:
-            title = response.xpath('//title/text()').extract()
+            title = response.xpath('//title/text()').extract()[0].split('|')[0]
             article = ' '.join(response.xpath(
                 '//div[@class="field-body"]/p/text()').extract())
-            # print(article)
             raw_date = response.xpath(
-                '//div[@class="byline-date"]/text()').extract()
+                '//div[@class="byline-date"]/text()').extract_first()
             date = datetime.strptime(raw_date, '%m/%d/%Y')
             item['title'] = title
             item['article'] = article
             item['date'] = str(date)
             item['link'] = response.url
-            print(item)
             return item
         except Exception as e:
-            print('Parsing Successful Farming Item failed')
-            print(item)
+            pass
