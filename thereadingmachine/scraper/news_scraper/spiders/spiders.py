@@ -348,4 +348,5 @@ class SuccessfulFarmingSpider(AmisCrawlSpider):
             print(item)
             return item
         except Exception as e:
-            pass
+            print('Parsing Successful Farming Item failed')
+            print(item)
