@@ -17,7 +17,7 @@ NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 # Logging
 LOG_STDOUT = False
-LOG_LEVEL = 'ERROR'
+# LOG_LEVEL = 'ERROR'
 
 # Only scrap data that is new
 SCRAPE_ONLY_NEW = True
