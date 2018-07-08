@@ -326,17 +326,23 @@ class SuccessfulFarmingSpider(AmisCrawlSpider):
     allowed_domains = ['www.agriculture.com']
     start_urls = ['http://www.agriculture.com/']
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(),
-             callback='parse_item',
-             follow=True)
+        Rule(
+            UnicodeFriendlyLinkExtractor(
+                deny=['(page=[0-9]{3,5})', 'video', 'podcast', 'tv',
+                      'progress-maps' 'pdf', 'contact', 'content',
+                      'author', 'three-big-things',
+                      'crop-condition', 'commodity-prices']
+            ),
+            follow=True,
+            callback='parse_item')
     ]
 
     def parse_item(self, response):
         item = NewsArticleItem()
         try:
             title = response.xpath('//title/text()').extract()[0].split('|')[0]
-            article = ' '.join(response.xpath(
-                '//div[@class="field-body"]/p/text()').extract())
+            article = response.xpath(
+                '//div[@class="field-body"]/p/text()').extract()
             raw_date = response.xpath(
                 '//div[@class="byline-date"]/text()').extract_first()
             date = datetime.strptime(raw_date, '%m/%d/%Y')
@@ -346,4 +352,5 @@ class SuccessfulFarmingSpider(AmisCrawlSpider):
             item['link'] = response.url
             return item
         except Exception as e:
+            print(response.url)
             pass
