@@ -233,8 +233,7 @@ class EuractivSpider(AmisCrawlSpider):
         # Then parse the item which does not contain the '/page/'
         # section.
         Rule(
-            UnicodeFriendlyLinkExtractor(),
-            deny='page',
+            UnicodeFriendlyLinkExtractor(deny='page'),
             callback='parse_item')
     ]
 
