@@ -44,9 +44,9 @@ Follow this
 to manually launch an instance and setup Docker.
 
 
-Currently, the ideal instance size has not yet been determined,
-further optimisation is required. However, there are two known changes
-required for the deployment.
+Currently, the minimum instance size is `t2.large`. It has been tested
+that `t2.medium` does not have sufficient memory for the process
+`article_processing`.
 
 After launching and ssh into the instance, update and install Docker as per tutorial.
 
@@ -100,8 +100,12 @@ and require clean up. This can be done with the following command on
 the instance.
 
 ```
-docker system prune -a -f
+echo "0 0 * * * docker system prune -a -f" | crontab -
 ```
+
+This will schedule a cron job to clean up redudant space used by
+Docker everyday at midnight.
+
 
 Please see the [community
 forum](https://forums.docker.com/t/some-way-to-clean-up-identify-contents-of-var-lib-docker-overlay/30604/2)
