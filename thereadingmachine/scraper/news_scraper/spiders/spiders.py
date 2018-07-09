@@ -224,10 +224,18 @@ class EuractivSpider(AmisCrawlSpider):
     allowed_domains = ['www.euractiv.com']
     start_urls = ['http://www.euractiv.com']
     rules = [
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/agriculture-food/news/)((?!:).)*$'),
-             callback='parse_item', follow=True),
-        Rule(UnicodeFriendlyLinkExtractor(allow='(/news/)((?!:).)*$'),
-             callback='parse_item', follow=True)
+        # Extract all links
+        Rule(
+            UnicodeFriendlyLinkExtractor(
+                allow=['(/agriculture-food/news/)((?!:).)*$',
+                       '(/news/)((?!:).)*$']),
+            follow=True),
+        # Then parse the item which does not contain the '/page/'
+        # section.
+        Rule(
+            UnicodeFriendlyLinkExtractor(),
+            deny='page',
+            callback='parse_item')
     ]
 
     def parse_item(self, response):
