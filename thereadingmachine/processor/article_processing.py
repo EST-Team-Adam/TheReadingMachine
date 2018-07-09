@@ -48,7 +48,7 @@ def scraper_post_processing(raw_articles, model_start_date, id_col='id',
 
 def text_processor(text, remove_captalisation=True, remove_noun=False,
                    remove_numerical=True, remove_punctuation=True,
-                   stem=False, tokenizer=None):
+                   stem=False, tokenizer=None, max_token_size=None):
     '''The function process the texts with the intention for topic
     modelling.
 
@@ -108,6 +108,23 @@ def text_processor(text, remove_captalisation=True, remove_noun=False,
     nonstopword_text = [word
                         for word in tokenized_text
                         if word.lower() not in exclusion_words]
+    # Subset the text
+    #
+    # NOTE (Michael): Research has shown that subsetting the text
+    #                 generally improves the model performance. There
+    #                 are two main reason behind this approach.
+    #
+    #                 1. Most of the information are contained in the
+    #                    first paragraph, and thus additional text
+    #                    adds little value.
+    #
+    #                 2. The reduction of information actually allows
+    #                    models to better capture the meaning. Where
+    #                    models generally perform poorly on large
+    #                    corpusus.
+    if max_token_size is not None:
+        nonstopword_text = nonstopword_text[:max_token_size]
+
     return nonstopword_text
 
 
@@ -142,7 +159,7 @@ def article_summariser(article_list):
 def text_preprocessing(article_df, article_col, min_length,
                        remove_captalisation=True, remove_noun=False,
                        remove_numerical=True, remove_punctuation=True,
-                       stem=False, date_col='date'):
+                       stem=False, max_token_size=None, date_col='date'):
     '''Process the text extracted from the scrapper.
 
     In addition, articles with tokens less than the min_length
@@ -158,7 +175,8 @@ def text_preprocessing(article_df, article_col, min_length,
                                      remove_noun=remove_noun,
                                      remove_numerical=remove_numerical,
                                      remove_punctuation=remove_punctuation,
-                                     stem=stem)
+                                     stem=stem,
+                                     max_token_size=max_token_size)
                       for a in article_df[article_col]]
 
     # Find the index of entries where the article length is less than

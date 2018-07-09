@@ -19,6 +19,7 @@ preprocessed_text, text_summary = (
                            remove_noun=param.remove_noun,
                            remove_numerical=param.remove_numerical,
                            remove_punctuation=param.remove_punctuation,
+                           max_token_size=param.max_token_size,
                            stem=param.stem))
 
 # Save the data
