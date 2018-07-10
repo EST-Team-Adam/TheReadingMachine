@@ -46,6 +46,7 @@ sentiment_scale = 50
 bootstrapIteration = 75
 forecast_period = 0
 holdout_period = 180
+elasticnet_alpha = 0.8
 
 # RNN Model parameters
 feature_size = 100
