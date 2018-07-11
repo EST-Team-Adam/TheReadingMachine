@@ -67,9 +67,6 @@ class AmisScrapePipeline(object):
         self.data_list = []
         self.today = datetime.today()
 
-    def open_spider(self, spider):
-        pass
-
     def process_item(self, item, spider):
         try:
             item_dict = dict(item)
