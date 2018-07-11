@@ -279,12 +279,6 @@ class AgriMoneySpider(AmisCrawlSpider):
     ]
 
     def parse_item(self, response):
-        # NOTE (Michael): This is not used, review required.
-        #
-        # cleaned_response = response.replace(
-        #     body=response.body_as_unicode().encode('utf-8', 'ignore'),
-        #     encoding='utf-8'
-        # )
         item = NewsArticleItem()
         try:
             title = response.xpath(
