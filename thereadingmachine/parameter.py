@@ -43,6 +43,7 @@ model_start_date = datetime(2010, 1, 1).date()
 # Model parameters
 filter_coef = 1
 sentiment_scale = 50
+forecast_period = 0
 
 # RNN Model parameters
 feature_size = 100
