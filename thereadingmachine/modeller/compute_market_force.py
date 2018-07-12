@@ -6,7 +6,7 @@ import thereadingmachine.environment as env
 import thereadingmachine.parameter as param
 from bisect import bisect_left
 from plotly.offline import plot
-from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import ElasticNetCV
 from statsmodels.distributions.empirical_distribution import ECDF
 
 
@@ -94,8 +94,8 @@ def estimate_sentiment_weights(model_data, response_variable):
     ''' Estimate the model coefficient of the sentiment time series.
     '''
 
-    model = ElasticNet(alpha=param.elasticnet_alpha, l1_ratio=1,
-                       fit_intercept=True, normalize=False)
+    model = ElasticNetCV(n_alphas=100, l1_ratio=1, fit_intercept=True,
+                         normalize=True, max_iter=30000)
     topic_variables = get_topic_variables()
     model.fit(model_data[topic_variables], model_data[response_variable])
     return model.coef_
