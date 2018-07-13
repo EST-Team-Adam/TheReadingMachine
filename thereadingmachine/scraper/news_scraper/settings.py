@@ -15,7 +15,12 @@ SPIDER_MODULES = ['thereadingmachine.scraper.news_scraper.spiders']
 NEWSPIDER_MODULE = 'thereadingmachine.scraper.news_scraper.spiders'
 
 
+# Logging
 LOG_STDOUT = False
+LOG_LEVEL = 'ERROR'
+
+# Only scrap data that is new
+SCRAPE_ONLY_NEW = True
 
 # Crawl responsibly by identifying yourself (and your website) on the
 # user-agent
@@ -42,5 +47,5 @@ COOKIES_ENABLED = False
 ITEM_PIPELINES = {
     'thereadingmachine.scraper.news_scraper.pipelines.DuplicatesPipeline': 100,
     'thereadingmachine.scraper.news_scraper.pipelines.SanitizeArticlePipeline': 300,
-    'thereadingmachine.scraper.news_scraper.pipelines.AmisJsonPipeline': 500
+    'thereadingmachine.scraper.news_scraper.pipelines.AmisScrapePipeline': 500
 }

@@ -39,8 +39,9 @@ def scraper_post_processing(raw_articles, model_start_date, id_col='id',
         param.irrelevant_link)]
 
     # Subset the data only after the model_start_date
-    processed_articles = processed_articles[processed_articles[date_col]
-                                            > model_start_date]
+    processed_articles = processed_articles[
+        (processed_articles[date_col] > model_start_date) &
+        (processed_articles[date_col] <= datetime.today())]
 
     return processed_articles
 
