@@ -5,6 +5,7 @@
 *.Rhistory
 *.log
 *.pdf
+*.zip
 
 # Data files and db
 *.pkl
@@ -28,3 +29,5 @@ data/taggers/
 data/tokenizers/
 data/credentials.txt
 
+# AWS
+.aws
