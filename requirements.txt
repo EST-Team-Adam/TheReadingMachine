@@ -30,7 +30,7 @@ functools32==3.2.3.post2
 future==0.15.2
 gitdb2==2.0.2
 GitPython==2.1.5
-gunicorn==19.3.0
+gunicorn==19.5.0
 html5lib==0.9999999
 hyperlink==17.3.1
 idna==2.6
