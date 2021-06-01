@@ -99,7 +99,7 @@ traitlets==4.3.2
 Twisted==19.7.0
 twitter==1.17.1
 Unidecode==0.4.21
-urllib3==1.24.2
+urllib3==1.26.5
 w3lib==1.18.0
 wcwidth==0.1.7
 Werkzeug==0.12.2
