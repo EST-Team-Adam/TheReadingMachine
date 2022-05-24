@@ -92,7 +92,7 @@ SQLAlchemy==1.1.14
 statsmodels==0.8.0
 subprocess32==3.2.7
 tabulate==0.7.7
-tensorflow==1.12.2
+tensorflow==2.6.4
 tensorflow-tensorboard==0.1.7
 thrift==0.9.3
 traitlets==4.3.2
