@@ -31,7 +31,7 @@ future==0.15.2
 gitdb2==2.0.2
 GitPython==2.1.5
 gunicorn==19.5.0
-html5lib==0.9999999
+html5lib==0.99999999
 hyperlink==17.3.1
 idna==2.6
 incremental==17.5.0
