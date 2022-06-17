@@ -81,7 +81,7 @@ requests==2.20.0
 scandir==1.5
 scikit-learn==0.19.0
 scipy==0.19.1
-Scrapy==1.4.0
+Scrapy==2.6.1
 service-identity==17.0.0
 setproctitle==1.1.10
 simplegeneric==0.8.1
